@@ -1,0 +1,5 @@
+/gui/config/
+/gui/credentials.json
+/gui/token.json
+/gui/invoice_s3.py
+/gui/test.py
