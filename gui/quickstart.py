@@ -166,7 +166,15 @@ class BostonEDU_Google_Calendar:
                 #     delta /= 2
 
             schedule_date = datetime.strptime(event["start"].get("dateTime")[:10], "%Y-%m-%d")
-            stu_base_rate = self._invoice_database.find_student_rate(lineitem.get_code_names()[2:4].upper())
+
+            code_name = lineitem.get_code_names()
+
+            if re.search(r"S\d+\*$", code_name):
+                stu_base_rate = int(re.findall(r"S(\d+)\*$", code_name)[0])    # How does re.findall() read only in parenthesis?
+            else:
+                stu_base_rate = self._invoice_database.find_student_rate(re.findall(r"S\d+$", code_name)[0])
+
+            stu_base_rate = abs(stu_base_rate)  # Prevent negative numbers from entering invoice.
 
             for student in lineitem.get_student_names():
                 re_fixed_student = re.sub(RE_PARENTHESIS, "", student)  # Remove parenthesis adjacent to student name
@@ -215,8 +223,15 @@ class BostonEDU_Google_Calendar:
                 excluded_cxl_list = list(filter(lambda x: not RE_CXL_COMPILE.search(x), lineitem.get_student_names()))
 
                 schedule_date = datetime.strptime(event["start"].get("dateTime")[:10], "%Y-%m-%d")
-                tea_base_rate = self._invoice_database.find_teacher_rate(lineitem.get_code_names()[0:2].upper())
 
+                code_name = lineitem.get_code_names()
+
+                if re.search(r"^T\d+\*", code_name):
+                    tea_base_rate = int(re.findall(r"^T(\d+)\*", code_name)[0])  # How does re.findall() read only in parenthesis?
+                else:
+                    tea_base_rate = self._invoice_database.find_teacher_rate(re.findall(r"^T\d+", code_name)[0])
+
+                tea_base_rate = abs(tea_base_rate)  # Prevent negative numbers from entering invoice.
 
                 teacher_date = schedule_date.strftime("%m/%d/%Y")
                 teacher_class = lineitem.get_class_name()

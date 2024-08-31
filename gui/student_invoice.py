@@ -11,8 +11,8 @@ from invoice import Invoice, CalendarData_Invoice_LinkedList, _copy_range
 
 EXCEL_INVOICE_FILENAME = "%B %Y - ({})"
 
-_FILEPATH = r"template/Student Base Template.xlsx"
-_STUDENT_INVOICE_OUTPUT = r"base_generated/student/{}/{}.xlsx"
+FILEPATH = r"template/Student Base Template.xlsx"
+STUDENT_INVOICE_OUTPUT = r"base_generated/student/{}/{}.xlsx"
 
 def read_past_tuition_amount(destination: str, student_name: str) -> float:
     try:
@@ -84,9 +84,9 @@ class StudentInvoice(Invoice):
         while tempHead != None:
             self._total_amount = 0
             revised_date_filename = self._schedule_date.strftime(EXCEL_INVOICE_FILENAME).format(tempHead.person_name)
-            destination = (_STUDENT_INVOICE_OUTPUT.format(tempHead.person_name, revised_date_filename))
+            destination = (STUDENT_INVOICE_OUTPUT.format(tempHead.person_name, revised_date_filename))
 
-            is_filepath_validated = self._check_filepath_validation(tempHead.person_name, _FILEPATH, destination, revised_date_filename)
+            is_filepath_validated = self._check_filepath_validation(tempHead.person_name, FILEPATH, destination, revised_date_filename)
             if not is_filepath_validated:
                 tempHead = tempHead.next
                 continue
@@ -97,7 +97,7 @@ class StudentInvoice(Invoice):
             local_sheet = local_workbook.active
 
             prev_excel_date = _name_previous_excel_date(self._schedule_date, tempHead.person_name)
-            tuition_amount = read_past_tuition_amount(_STUDENT_INVOICE_OUTPUT
+            tuition_amount = read_past_tuition_amount(STUDENT_INVOICE_OUTPUT
                                                       .format(tempHead.person_name, prev_excel_date), tempHead.person_name)
             local_sheet["G14"] = tuition_amount
             #self._total_amount += local_sheet["G14"].value

@@ -14,7 +14,7 @@ def split_calendar_title(title: str) -> list:
     # For consistency
     if title_sep[0].upper() != "CXL" and title_sep[0].upper() != "NS":
         title_sep.insert(0, "")
-    if not re.search(r"T(\d+)S(\d+)", title_sep[4].upper()):
+    if not re.search(r"^T(\d+)(\*?)S(\d+)(\*?)$", title_sep[4].upper().replace(" ", "")):
         raise Exception("ERROR: Improper code format currently read as {} for: {}! Skipping...".format(title_sep[4], title))
 
     if len(title_sep) > 6:
@@ -28,7 +28,7 @@ class LineItem:
         self._teacher_name = title_split[1]
         self._student_names = re.split(r",(?:\s*)", title_split[2])
         self._class_name = title_split[3]
-        self._code_names = title_split[4].upper()
+        self._code_names = title_split[4].upper().replace(" ", "")
         self._modality = title_split[5]
 
         self._is_no_show = title_split[0].upper() == "NS"

@@ -2,7 +2,9 @@ import json
 import re
 import tkinter as tk
 import urllib.request
+import urllib.error
 import webbrowser
+from pathlib import Path
 from tkinter import messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 from datetime import datetime
@@ -15,10 +17,10 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-_VERSION = "beta-v0.0.1"
+VERSION = "beta-v0.1.0"
 
-_PADX = 10
-_PADY = 10
+DEF_PADX = 10
+DEF_PADY = 10
 
 """
 Original source from: https://stackoverflow.com/questions/68198575/how-can-i-displaymy-console-output-in-tkinter
@@ -40,8 +42,11 @@ class PrintLogger(object):  # create file like object
 
 class Invoice_GUI:
     def __init__(self):
+        self._auto_sync_updater_file()
+        self._check_update()
+
         self._window = tk.Tk()
-        self._window.title("BosVoiceTon | {}".format(_VERSION))
+        self._window.title("BosVoiceTon | {}".format(VERSION))
         self._window.iconbitmap(self._window, r"image/icon.ico")
         self._window.resizable(False, False)
         self._window.geometry("680x570")
@@ -62,22 +67,22 @@ class Invoice_GUI:
         #############################
 
         self._console_label = ttk.Label(self._tab1, text="Console")
-        self._console_label.grid(row=0, column=0, sticky=tk.W + tk.S, padx=_PADX, pady=3)
+        self._console_label.grid(row=0, column=0, sticky=tk.W + tk.S, padx=DEF_PADX, pady=3)
         self._console_window = ScrolledText(self._tab1, state="disabled", font=("Arial", 10), width=91)
-        self._console_window.grid(row=1, column=0, columnspan=5, sticky=tk.NSEW, padx=_PADX, pady=3)
+        self._console_window.grid(row=1, column=0, columnspan=5, sticky=tk.NSEW, padx=DEF_PADX, pady=3)
         # self._console_window = tk.Text(self._tab1, state="disabled")
-        # self._console_window.grid(row=1, column=0, columnspan=5, sticky=tk.EW, padx=_PADX, pady=3)
+        # self._console_window.grid(row=1, column=0, columnspan=5, sticky=tk.EW, padx=DEF_PADX, pady=3)
         # self._console_scrollbar = ttk.Scrollbar(self._tab1, orient="vertical", command=self._console_window.yview)
-        # self._console_scrollbar.grid(row=1, column=4, sticky=tk.NS + tk.E, padx=_PADX, pady=3)
+        # self._console_scrollbar.grid(row=1, column=4, sticky=tk.NS + tk.E, padx=DEF_PADX, pady=3)
         # self._console_window["yscrollcommand"] = self._console_scrollbar.set
         logger = PrintLogger(self._console_window)
         sys.stdout = logger
         sys.stderr = logger
 
         self._select_date_display = tk.Label(self._tab1, text="Select a date to begin generating invoice:")
-        self._select_date_display.grid(row=2, columnspan=5, sticky=tk.W, padx=_PADX)
+        self._select_date_display.grid(row=2, columnspan=5, sticky=tk.W, padx=DEF_PADX)
         self._month_label = tk.Label(self._tab1, text="Month:")
-        self._month_label.grid(row=3, column=0, sticky=tk.W, padx=_PADX)
+        self._month_label.grid(row=3, column=0, sticky=tk.W, padx=DEF_PADX)
 
         self._month_combobox = ttk.Combobox(self._tab1, state="readonly")
         self._month_combobox['values'] = ('January','February','March',
@@ -89,7 +94,7 @@ class Invoice_GUI:
         self._month_combobox.grid(row=3, column=1, sticky=tk.W)
 
         self._year_label = tk.Label(self._tab1, text="Year:")
-        self._year_label.grid(row=4, column=0, sticky=tk.W, padx=_PADX)
+        self._year_label.grid(row=4, column=0, sticky=tk.W, padx=DEF_PADX)
 
         year = int(datetime.now().strftime("%Y"))
         self._year_combobox = ttk.Combobox(self._tab1, state="readonly")
@@ -100,15 +105,15 @@ class Invoice_GUI:
 
         # self._day_manipulator(None)
 
-        self._version_info = tk.Label(self._tab1, text="Build Version: {}".format(_VERSION))
-        self._version_info.grid(row=5, columnspan=5, sticky=tk.W + tk.S, padx=_PADX, pady=_PADY)
+        self._version_info = tk.Label(self._tab1, text="Build Version: {}".format(VERSION))
+        self._version_info.grid(row=5, columnspan=5, sticky=tk.W + tk.S, padx=DEF_PADX, pady=DEF_PADY)
 
         # self._save_tuition_var = tk.BooleanVar()
         # self._save_tuition_var.set(False)
         # self._save_tuition_checkbutton = ttk.Checkbutton(self._tab1, text="Save Tuition", variable=self._save_tuition_var)
-        # self._save_tuition_checkbutton.grid(row=3, column=4, sticky=tk.E, padx=_PADX)
+        # self._save_tuition_checkbutton.grid(row=3, column=4, sticky=tk.E, padx=DEF_PADX)
         self._startbutton = ttk.Button(self._tab1, text="Start", command=self._begin_invoice)
-        self._startbutton.grid(row=4, column=4, sticky=tk.W + tk.E, padx=_PADX, pady=_PADY)
+        self._startbutton.grid(row=4, column=4, sticky=tk.W + tk.E, padx=DEF_PADX, pady=DEF_PADY)
 
         self._connect_database()
         self._connect_s3_bucket()
@@ -119,9 +124,9 @@ class Invoice_GUI:
         #########################
 
         self._data_text = tk.Label(self._tab2, text="Data Window:")
-        self._data_text.grid(row=0, column=0, sticky=tk.W + tk.S, padx=_PADX, pady=3)
+        self._data_text.grid(row=0, column=0, sticky=tk.W + tk.S, padx=DEF_PADX, pady=3)
         # self._data_window = ScrolledText(self._tab2, state="disabled", width=25)
-        # self._data_window.grid(row=1, column=0, rowspan=4, sticky=tk.NSEW, padx=_PADX, pady=3)
+        # self._data_window.grid(row=1, column=0, rowspan=4, sticky=tk.NSEW, padx=DEF_PADX, pady=3)
 
         self._data_window_treeview = ttk.Treeview(self._tab2, columns=("c1", "c2", "c3"), show="headings", height=18)
         self._data_window_treeview.column(0, stretch=tk.NO, width=30)
@@ -130,21 +135,21 @@ class Invoice_GUI:
         self._data_window_treeview.heading(1, text="")
         self._data_window_treeview.column(2, stretch=tk.NO, width=70)
         self._data_window_treeview.heading(2, text="")
-        self._data_window_treeview.grid(row=1, column=0, rowspan=4, sticky=tk.NSEW, padx=_PADX, pady=3)
+        self._data_window_treeview.grid(row=1, column=0, rowspan=4, sticky=tk.NSEW, padx=DEF_PADX, pady=3)
 
         self._student_rate_button = ttk.Button(self._tab2, text="Show Student/Teacher Code List", command=self._show_teacher_student_code)
-        self._student_rate_button.grid(row=5, column=0, sticky=tk.EW, padx=_PADX, pady=3)
+        self._student_rate_button.grid(row=5, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
         self._student_discount_button = ttk.Button(self._tab2, text="Show Discount", command=self._show_discount_amount)
-        self._student_discount_button.grid(row=6, column=0, sticky=tk.EW, padx=_PADX, pady=3)
+        self._student_discount_button.grid(row=6, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
         # self._student_tuition_button = ttk.Button(self._tab2, text="Show Tuition", command=self._show_tuition_amount)
-        # self._student_tuition_button.grid(row=7, column=0, sticky=tk.EW, padx=_PADX, pady=3)
+        # self._student_tuition_button.grid(row=7, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
         self._class_name_button = ttk.Button(self._tab2, text="Show Class", command=self._show_class_names)
-        self._class_name_button.grid(row=7, column=0, sticky=tk.EW, padx=_PADX, pady=3)
+        self._class_name_button.grid(row=7, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
         self._clear_button = ttk.Button(self._tab2, text="Clear", command=self._clear_data_window)
-        self._clear_button.grid(row=8, column=0, sticky=tk.EW, padx=_PADX, pady=3)
+        self._clear_button.grid(row=8, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
 
         self._data_modify_text = tk.Label(self._tab2, text="Modify:")
-        self._data_modify_text.grid(row=0, column=1, sticky=tk.W + tk.S, padx=_PADX, pady=3)
+        self._data_modify_text.grid(row=0, column=1, sticky=tk.W + tk.S, padx=DEF_PADX, pady=3)
 
         self._data_options_var = tk.IntVar()
         self._add_option = ttk.Radiobutton(self._tab2, text="Add",
@@ -182,16 +187,16 @@ class Invoice_GUI:
         # self._data_tuition_as_calc_var = tk.BooleanVar()
         # self._data_tuition_as_calc_var.set(True)
         # self._data_tuition_as_calc = ttk.Checkbutton(self._tab2, text="Set Tuition as Calculation", variable=self._data_tuition_as_calc_var)
-        # self._data_tuition_as_calc.grid(row=2, column=1, columnspan=5, sticky=tk.E + tk.N, padx=_PADX, pady=_PADY)
+        # self._data_tuition_as_calc.grid(row=2, column=1, columnspan=5, sticky=tk.E + tk.N, padx=DEF_PADX, pady=DEF_PADY)
 
         self._data_sendrequest_button = ttk.Button(self._tab2, text="Send Request", command=self._process_database)
-        self._data_sendrequest_button.grid(row=2, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=_PADY)
+        self._data_sendrequest_button.grid(row=2, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=DEF_PADY)
 
         self._data_message_output = ttk.Label(self._tab2, text="")
         self._data_message_output.grid(row=2, column=1, columnspan=4, sticky=tk.W, padx=3)
 
         self._payment_label = ttk.Label(self._tab2, text="Payment:")
-        self._payment_label.grid(row=2, column=1, sticky=tk.EW + tk.S, padx=3, pady=_PADY)
+        self._payment_label.grid(row=2, column=1, sticky=tk.EW + tk.S, padx=3, pady=DEF_PADY)
         self._payment_name_label = ttk.Label(self._tab2, text="Student Name:")
         self._payment_name_label.grid(row=3, column=1, sticky=tk.E + tk.N, padx=3, pady=3)
         self._payment_name_combobox = ttk.Combobox(self._tab2)
@@ -219,7 +224,7 @@ class Invoice_GUI:
         self._payment_type_combobox.grid(row=3, column=2, sticky=tk.EW + tk.S, padx=3, pady=3)
 
         self._payment_apply_button = ttk.Button(self._tab2, text="Make Payment", command=self._update_payment)
-        self._payment_apply_button.grid(row=4, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=_PADY)
+        self._payment_apply_button.grid(row=4, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=DEF_PADY)
 
         self._payment_message_label = ttk.Label(self._tab2, text="")
         self._payment_message_label.grid(row=4, column=1, rowspan=2, columnspan=4, sticky=tk.W, padx=3)
@@ -229,34 +234,34 @@ class Invoice_GUI:
         ###############################
 
         self._preview_text = ttk.Label(self._tab3, text="Preview:")
-        self._preview_text.grid(row=0, column=0, padx=_PADX, pady=_PADY)
+        self._preview_text.grid(row=0, column=0, padx=DEF_PADX, pady=DEF_PADY)
 
         self._preview = tk.StringVar()
         self._preview_textbox = tk.Entry(self._tab3, textvariable=self._preview)
         self._preview_textbox.config(state="readonly")
-        self._preview_textbox.grid(row=0, column=1, columnspan=7, sticky=tk.W + tk.E, padx=_PADX, pady=_PADY)
+        self._preview_textbox.grid(row=0, column=1, columnspan=7, sticky=tk.W + tk.E, padx=DEF_PADX, pady=DEF_PADY)
 
         self._hor_separator = ttk.Separator(self._tab3, orient="horizontal")
-        self._hor_separator.grid(row=1, columnspan=8, sticky=tk.EW, padx=_PADX, pady=_PADY)
+        self._hor_separator.grid(row=1, columnspan=8, sticky=tk.EW, padx=DEF_PADX, pady=DEF_PADY)
 
         self._comma_description = ttk.Label(self._tab3, text="TIP: Separate the names with comma to see the full list again.")
-        self._comma_description.grid(row=2, columnspan=8, sticky=tk.EW + tk.S, padx=_PADX, pady=_PADY)
+        self._comma_description.grid(row=2, columnspan=8, sticky=tk.EW + tk.S, padx=DEF_PADX, pady=DEF_PADY)
 
         self._cxl = tk.BooleanVar()
         self._cxl.set(False)
         self._cxl_checkbox = ttk.Checkbutton(self._tab3, text="CXL", variable=self._cxl, command=self._update_preview)
-        self._cxl_checkbox.grid(row=3, column=7, sticky=tk.W + tk.E, padx=_PADX)
+        self._cxl_checkbox.grid(row=3, column=7, sticky=tk.W + tk.E, padx=DEF_PADX)
 
         self._noshow = tk.BooleanVar()
         self._noshow.set(False)
         self._noshow_checkbox = ttk.Checkbutton(self._tab3, text="No Show", variable=self._noshow, command=self._update_preview)
-        self._noshow_checkbox.grid(row=5, column=7, sticky=tk.W + tk.E, padx=_PADX, pady=_PADY)
+        self._noshow_checkbox.grid(row=5, column=7, sticky=tk.W + tk.E, padx=DEF_PADX, pady=DEF_PADY)
 
         self._teacher_name_text = ttk.Label(self._tab3, text="Teacher Name:")
-        self._teacher_name_text.grid(row=3, column=0, padx=_PADX)
+        self._teacher_name_text.grid(row=3, column=0, padx=DEF_PADX)
         self._teacher_name_entry = ttk.Entry(self._tab3)
         self._teacher_name_entry.bind("<KeyRelease>", self._update_teacher_listbox)
-        self._teacher_name_entry.grid(row=3, column=1, sticky=tk.W + tk.E, padx=_PADX)
+        self._teacher_name_entry.grid(row=3, column=1, sticky=tk.W + tk.E, padx=DEF_PADX)
 
         self._teacher_name_listbox = tk.Listbox(self._tab3, selectmode="single", exportselection=0)
 
@@ -264,13 +269,13 @@ class Invoice_GUI:
             self._teacher_name_listbox.insert(tk.END, teacher[0])
 
         self._teacher_name_listbox.bind("<<ListboxSelect>>", self._update_teacher_entry)
-        self._teacher_name_listbox.grid(row=4, column=1, sticky=tk.NSEW, padx=_PADX)
+        self._teacher_name_listbox.grid(row=4, column=1, sticky=tk.NSEW, padx=DEF_PADX)
 
         self._student_name_text = ttk.Label(self._tab3, text="Student Name:")
-        self._student_name_text.grid(row=3, column=2, padx=_PADX)
+        self._student_name_text.grid(row=3, column=2, padx=DEF_PADX)
         self._student_name_entry = ttk.Entry(self._tab3)
         self._student_name_entry.bind("<KeyRelease>", self._update_student_listbox)
-        self._student_name_entry.grid(row=3, column=3, columnspan=4, sticky=tk.W + tk.E, padx=_PADX)
+        self._student_name_entry.grid(row=3, column=3, columnspan=4, sticky=tk.W + tk.E, padx=DEF_PADX)
         
         self._student_name_listbox = tk.Listbox(self._tab3, selectmode="single", exportselection=0)
 
@@ -278,37 +283,49 @@ class Invoice_GUI:
             self._student_name_listbox.insert(tk.END, student[0])
 
         self._student_name_listbox.bind("<<ListboxSelect>>", self._update_student_entry)
-        self._student_name_listbox.grid(row=4, column=3, columnspan=4, sticky=tk.NSEW, padx=_PADX)
+        self._student_name_listbox.grid(row=4, column=3, columnspan=4, sticky=tk.NSEW, padx=DEF_PADX)
         
         self._class_name_text = ttk.Label(self._tab3, text="Class Name:")
-        self._class_name_text.grid(row=5, column=0, padx=_PADX, pady=_PADY)
+        self._class_name_text.grid(row=5, column=0, padx=DEF_PADX, pady=DEF_PADY)
         self._class_name_combobox = ttk.Combobox(self._tab3)
         self._class_name_combobox["values"] = [classname[0] for classname in sorted(self._database.get_all_class_name(), key=lambda x: x[0])]
         self._class_name_combobox.bind("<<ComboboxSelected>>", self._update_preview_event)
         self._class_name_combobox.bind("<KeyRelease>", self._update_preview_event)
-        self._class_name_combobox.grid(row=5, column=1, sticky=tk.W + tk.E, padx=_PADX, pady=_PADY)
+        self._class_name_combobox.grid(row=5, column=1, sticky=tk.W + tk.E, padx=DEF_PADX, pady=DEF_PADY)
 
         self._codename_text = ttk.Label(self._tab3, text="Code:")
-        self._codename_text.grid(row=5, column=2, padx=_PADX, pady=_PADY)
+        self._codename_text.grid(row=5, column=2, padx=DEF_PADX, pady=DEF_PADY)
 
         self._teacher_code_text = ttk.Label(self._tab3, text="T")
-        self._teacher_code_text.grid(row=5, column=3, sticky=tk.E, padx=_PADX, pady=2)
+        self._teacher_code_text.grid(row=5, column=3, sticky=tk.E, padx=DEF_PADX, pady=2)
+
+        self._t_asterisk = tk.BooleanVar()
+        self._t_asterisk.set(False)
+        self._teacher_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._t_asterisk, command=self._update_preview)
+        self._teacher_asterisk_checkbox.grid(row=6, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
         self._teacher_code_combobox = ttk.Combobox(self._tab3, width=3)
         self._teacher_code_combobox["values"] = [teachercode[0] for teachercode in self._database.get_teacher_code()]
         self._teacher_code_combobox.bind("<<ComboboxSelected>>", self._update_preview_event)
-        self._teacher_code_combobox.grid(row=5, column=4, sticky=tk.W, padx=_PADX, pady=2)
+        self._teacher_code_combobox.bind("<KeyRelease>", self._update_preview_event)
+        self._teacher_code_combobox.grid(row=5, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
 
         self._student_code_text = ttk.Label(self._tab3, text="S")
-        self._student_code_text.grid(row=5, column=5, sticky=tk.E, padx=_PADX, pady=2)
+        self._student_code_text.grid(row=5, column=5, sticky=tk.E, padx=DEF_PADX, pady=2)
+
+        self._s_asterisk = tk.BooleanVar()
+        self._s_asterisk.set(False)
+        self._student_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._s_asterisk, command=self._update_preview)
+        self._student_asterisk_checkbox.grid(row=6, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
         self._student_code_combobox = ttk.Combobox(self._tab3, width=3)
         self._student_code_combobox["values"] = [studentcode[0] for studentcode in self._database.get_student_code()]
         self._student_code_combobox.bind("<<ComboboxSelected>>", self._update_preview_event)
-        self._student_code_combobox.grid(row=5, column=6, sticky=tk.W, padx=_PADX, pady=2)
+        self._student_code_combobox.bind("<KeyRelease>", self._update_preview_event)
+        self._student_code_combobox.grid(row=5, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
 
         self._online = tk.BooleanVar()
         self._online.set(False)
         self._online_checkbox = ttk.Checkbutton(self._tab3, text="Online", variable=self._online, command=self._update_preview)
-        self._online_checkbox.grid(row=4, column=7, sticky=tk.W + tk.E, padx=_PADX, pady=_PADY)
+        self._online_checkbox.grid(row=4, column=7, sticky=tk.W + tk.E, padx=DEF_PADX, pady=DEF_PADY)
 
         ##################
         # [ABOUT (TAB4)] #
@@ -316,36 +333,62 @@ class Invoice_GUI:
 
         self._boston_logo_image = tk.PhotoImage(file="image/bostonedu_logo.png")
         self._boston_logo_image_label = ttk.Label(self._tab4, image=self._boston_logo_image)
-        self._boston_logo_image_label.grid(row=0, column=0, sticky=tk.W, padx=_PADX, pady=_PADY)
+        self._boston_logo_image_label.grid(row=0, column=0, sticky=tk.W, padx=DEF_PADX, pady=DEF_PADY)
 
         self._author_label = ttk.Label(self._tab4, text="Written and developed by:\n\nRuleon Ki Lee")
-        self._author_label.grid(row=0, column=1, sticky=tk.W, padx=_PADX, pady=_PADY)
+        self._author_label.grid(row=0, column=1, sticky=tk.W, padx=DEF_PADX, pady=DEF_PADY)
 
         self._about_description_label = ttk.Label(self._tab4, text="An invoice program designed to provide quality-of-life features\n"
                                                                    "to make easily and consistently. This aims to auto-generate\n"
                                                                    "invoice Excel sheets based on Google Calendar data.")
-        self._about_description_label.grid(row=1, column=0, sticky=tk.W, padx=_PADX, pady=_PADY)
+        self._about_description_label.grid(row=1, column=0, sticky=tk.W, padx=DEF_PADX, pady=DEF_PADY)
         self._about_copyright_disclaimer_label = ttk.Label(self._tab4, text="Copyright © 2023-2024 Boston Education. All Rights Reserved.")
-        self._about_copyright_disclaimer_label.grid(row=2, column=0, sticky=tk.W, padx=_PADX, pady=_PADY)
+        self._about_copyright_disclaimer_label.grid(row=2, column=0, sticky=tk.W, padx=DEF_PADX, pady=DEF_PADY)
 
         self._window.protocol("WM_DELETE_WINDOW", self._quit_application)
 
-    def _check_update(self) -> bool:
-        updater_url = "https://raw.githubusercontent.com/RueLee/BostonEdu_Invoice_2023/main/updater.json?token=GHSAT0AAAAAACUKSJXPYNERDVGXR2PSYHY4ZWD2KAA"
-        updater_url_request = urllib.request.Request(updater_url)
-        updater_url_response = urllib.request.urlopen(updater_url_request)
+    def _check_update(self) -> None:
+        try:
+            updater_url = "https://raw.githubusercontent.com/RueLee/BosVoiceTon/main/updater.json"
+            updater_url_request = urllib.request.Request(updater_url)
+            updater_url_response = urllib.request.urlopen(updater_url_request)
 
-        updater_data = updater_url_response.read()
-        updater_data_json = json.loads(updater_data.decode("utf-8"))
+            updater_data = updater_url_response.read()
+            updater_data_json = json.loads(updater_data.decode("utf-8"))
+            updater_url_response.close()
 
-        latest_version = updater_data_json["latest_version"]
-        if _VERSION != latest_version:
-            if not messagebox.askyesno(title="Update Available!", message="A new update is available! Would you like to open and download the latest version?\n\n"
-                                                                          "Your Version: {}\n"
-                                                                          "Latest Version: {}".format(_VERSION, latest_version)):
-                return False
+            latest_version = updater_data_json["latest_version"]
+            if VERSION != latest_version:
+                if not messagebox.askyesno(title="Update Available!", message="A new update is available! Would you like to open and download the latest version?\n\n"
+                                                                              "Your Version: {}\n"
+                                                                              "Latest Version: {}".format(VERSION, latest_version)):
+                    return
 
-            webbrowser.open_new_tab()
+                webbrowser.open_new_tab("https://github.com/RueLee/BostonEdu_Invoice_2023/releases/tag/{}".format(latest_version))
+                sys.exit(0)
+        except urllib.error.HTTPError as httpError:
+            messagebox.showerror(title="WEBSITE ERROR", message="Got an HTTP code of {} when attempting to check for updates!".format(httpError.getcode()))
+        except urllib.error.URLError:
+            messagebox.showerror(title="NETWORK ERROR", message="Unable to establish connection to check for updates in the repository!")
+
+    def _auto_sync_updater_file(self) -> None:
+        """For local repository only!"""
+        try:
+            current_path = Path().cwd()
+            parent_path = current_path.parent
+            updater_path = parent_path / "updater.json"
+
+            with open(updater_path, "r", encoding="utf-8") as inpath:
+                updater_json = json.load(inpath)
+                inpath.close()
+
+            updater_json["latest_version"] = VERSION
+
+            with open(updater_path, "w", encoding="utf-8") as outpath:
+                json.dump(updater_json, outpath, indent=4)
+                outpath.close()
+        except FileNotFoundError:
+            pass
 
     def _connect_database(self) -> None:
         try:
@@ -654,10 +697,15 @@ class Invoice_GUI:
         else:
             first_str = ""
 
-        self._preview_string = "{}{} - {} - {} - {}{} - {}".format(first_str,
-                                                            self._teacher_name_entry.get().title(), self._student_name_entry.get().title(),
-                                                            self._class_name_combobox.get(), self._teacher_code_combobox.get(),
-                                                            self._student_code_combobox.get(), "Online" if self._online.get() else "In Person")
+        self._preview_string = "{}{} - {} - {} - {}{}{}{} - {}".format(first_str,
+                                                            self._teacher_name_entry.get().title(),
+                                                            self._student_name_entry.get().title(),
+                                                            self._class_name_combobox.get(),
+                                                            self._teacher_code_combobox.get(),
+                                                                       "*" if self._t_asterisk.get() else "",
+                                                            self._student_code_combobox.get(),
+                                                                       "*" if self._s_asterisk.get() else "",
+                                                            "Online" if self._online.get() else "In Person")
         self._preview.set(self._preview_string)
 
     def _update_preview_event(self, event) -> None:
