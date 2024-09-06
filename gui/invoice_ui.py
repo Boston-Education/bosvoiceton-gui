@@ -17,7 +17,7 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-VERSION = "v0.1.1-beta"
+VERSION = "v0.1.2-beta"
 
 DEF_PADX = 10
 DEF_PADY = 10
@@ -349,7 +349,7 @@ class Invoice_GUI:
 
     def _check_update(self) -> None:
         try:
-            updater_url = "https://raw.githubusercontent.com/RueLee/BosVoiceTon/main/updater.json"
+            updater_url = "https://raw.githubusercontent.com/Boston-Education/bosvoiceton-gui/main/updater.json"
             updater_url_request = urllib.request.Request(updater_url)
             updater_url_response = urllib.request.urlopen(updater_url_request)
 
@@ -364,7 +364,7 @@ class Invoice_GUI:
                                                                               "Latest Version: {}".format(VERSION, latest_version)):
                     return
 
-                webbrowser.open_new_tab("https://github.com/RueLee/BosVoiceTon/releases/tag/{}".format(latest_version))
+                webbrowser.open_new_tab("https://github.com/Boston-Education/bosvoiceton-gui/releases/tag/{}".format(latest_version))
                 sys.exit(0)
         except urllib.error.HTTPError as httpError:
             messagebox.showerror(title="WEBSITE ERROR", message="Got an HTTP code of {} when attempting to check for updates!".format(httpError.getcode()))
