@@ -3,4 +3,4 @@
 /gui/credentials.json
 /gui/token.json
 /gui/invoice_s3.py
-/gui/test.py
+/gui/invoice_trend.py
