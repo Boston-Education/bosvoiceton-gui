@@ -17,7 +17,7 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-VERSION = "v0.1.2-beta"
+VERSION = "v0.1.3-beta"
 
 DEF_PADX = 10
 DEF_PADY = 10
@@ -342,8 +342,6 @@ class Invoice_GUI:
                                                                    "to make easily and consistently. This aims to auto-generate\n"
                                                                    "invoice Excel sheets based on Google Calendar data.")
         self._about_description_label.grid(row=1, column=0, sticky=tk.W, padx=DEF_PADX, pady=DEF_PADY)
-        self._about_copyright_disclaimer_label = ttk.Label(self._tab4, text="Copyright © 2023-2024 Boston Education. All Rights Reserved.")
-        self._about_copyright_disclaimer_label.grid(row=2, column=0, sticky=tk.W, padx=DEF_PADX, pady=DEF_PADY)
 
         self._window.protocol("WM_DELETE_WINDOW", self._quit_application)
 

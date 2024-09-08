@@ -216,8 +216,13 @@ class InvoiceDatabase:
         return self._cursor.fetchall()
 
     def get_all_class_row(self):
-        self._cursor.execute("SELECT * FROM course")
+        self._cursor.execute("SELECT AP, HONORS, CourseName FROM course")
         return self._cursor.fetchall()
+
+    # def create_invoice_data(self, schedule_date, student_name: str, class_name: str, hour: float):
+    #     self._cursor.execute("INSERT INTO stusale(LDate, StuID, SubID, LHour)\n"
+    #                          "SELECT ID"
+    #                          "VALUES ({}, {}, {}, {})".format(schedule_date, student_name, class_name, hour))
 
 # if __name__ == "__main__":
 #     print(InvoiceDatabase().create_discount_amount("Ruleon Lee", 0.3))
