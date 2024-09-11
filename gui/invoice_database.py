@@ -6,30 +6,6 @@ from mysql.connector import errorcode
 import config_file_reader as config
 
 _DB_NAME = "invoice"
-_DB_TABLES = {"student": "CREATE TABLE student ("
-                         "ID INT NOT NULL AUTO_INCREMENT,"
-                         "StudentName VARCHAR(255) NOT NULL,"
-                         "PRIMARY KEY (ID))",
-              "teacher": "CREATE TABLE teacher ("
-                         "ID INT NOT NULL AUTO_INCREMENT,"
-                         "TeacherName VARCHAR(255) NOT NULL,"
-                         "PRIMARY KEY (ID))",
-              "student_invoice_code": "CREATE TABLE student_invoice_code ("
-                                      "Code CHAR(4) NOT NULL,"
-                                      "Rate DOUBLE NOT NULL)",
-              "teacher_invoice_code": "CREATE TABLE teacher_invoice_code ("
-                                      "Code CHAR(4) NOT NULL,"
-                                      "Rate DOUBLE NOT NULL)",
-              "student_discount": "CREATE TABLE student_discount ("
-                                  "DiscountID INT NOT NULL AUTO_INCREMENT,"
-                                  "PersonID INT NOT NULL,"
-                                  "DiscountRate DOUBLE,"
-                                  "PRIMARY KEY (DiscountID),"
-                                  "FOREIGN KEY (PersonID) REFERENCES student(ID))",
-              "course": "CREATE TABLE course ("
-                        "AP BOOLEAN NOT NULL,"
-                        "HONORS BOOLEAN NOT NULL,"
-                        "CourseName VARCHAR(255) NOT NULL)"}
 
 class InvoiceDatabase:
     def __init__(self):
@@ -57,25 +33,6 @@ class InvoiceDatabase:
             else:
                 print(err)
 
-        # Check for existing tables. If not, create one.
-        print("Checking table existence/error...")
-        for name, table in _DB_TABLES.items():
-            try:
-                self._cursor.execute(table)
-                print("No table named {} found in {}. Generating...".format(name, _DB_NAME))
-                if name == "student_invoice_code" or name == "teacher_invoice_code":
-                    rate_num_loop = 20
-                    self._cursor.execute("INSERT INTO {} (Code, Rate) VALUES ('{}', {})".format(name, name[0].title() + "0", 0))
-                    for i in range(1, 26):
-                        self._cursor.execute("INSERT INTO {} (Code, Rate) VALUES ('{}', {})"
-                                             .format(name, name[0].title() + str(i), rate_num_loop))
-                        rate_num_loop += 5
-            except mysql.connector.Error as err:
-                # I could say to just use IF NOT EXISTS but should work for now.
-                if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-                    pass
-                else:
-                    print(err)
         self._rates_db.commit()
         print("Done!")
 
