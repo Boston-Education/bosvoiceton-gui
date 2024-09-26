@@ -73,14 +73,14 @@ class BostonEDU_Google_Calendar:
             self._timeMax = datetime(year, month, dayMax, tzinfo=pytz.timezone("America/Los_Angeles"))
             timeMax_fixed = self._timeMax.replace(hour=23, minute=59, second=59).isoformat()
 
-            timeMin = datetime(year, month, dayMin, tzinfo=pytz.timezone("America/Los_Angeles")).isoformat()
-            print("Retrieving information ranged from {} to {}!".format(timeMin, timeMax_fixed))
+            self._timeMin = datetime(year, month, dayMin, tzinfo=pytz.timezone("America/Los_Angeles"))
+            print("Retrieving information ranged from {} to {}!".format(self._timeMin, timeMax_fixed))
             events_result = (
                 service.events()
                 .list(
                     calendarId="primary",
                     timeMax=timeMax_fixed,
-                    timeMin=timeMin,
+                    timeMin=self._timeMin,
                     singleEvents=True,
                     orderBy="startTime",
                     maxResults=2500,
@@ -144,7 +144,7 @@ class BostonEDU_Google_Calendar:
         return lineitem
 
     def _process_student_invoice(self, events) -> None:
-        student_invoice = StudentInvoice(self._timeMax, self._invoice_database, self._invoice_s3)
+        student_invoice = StudentInvoice(self._timeMin, self._timeMax, self._invoice_database, self._invoice_s3)
 
         # for event in events:
         #     print(event["summary"], event["start"].get("dateTime"))
@@ -172,7 +172,7 @@ class BostonEDU_Google_Calendar:
             if re.search(r"S\d+\*$", code_name):
                 stu_base_rate = int(re.findall(r"S(\d+)\*$", code_name)[0])    # How does re.findall() read only in parenthesis?
             else:
-                stu_base_rate = self._invoice_database.find_student_rate(re.findall(r"S\d+$", code_name)[0])
+                stu_base_rate = int(re.findall(r"S\d+$", code_name)[0])
 
             stu_base_rate = abs(stu_base_rate)  # Prevent negative numbers from entering invoice.
 
@@ -199,7 +199,7 @@ class BostonEDU_Google_Calendar:
         print(r"Your file has been saved to: {}\base_generated".format(Path().absolute()))
 
     def _process_teacher_invoice(self, events) -> None:
-        teacher_invoice = TeacherInvoice(self._timeMax, self._invoice_database, self._invoice_s3)
+        teacher_invoice = TeacherInvoice(self._timeMin, self._timeMax, self._invoice_database, self._invoice_s3)
 
         for event in events:
             lineitem = self._check_and_obtain_calendar_variables(event)
@@ -229,7 +229,7 @@ class BostonEDU_Google_Calendar:
                 if re.search(r"^T\d+\*", code_name):
                     tea_base_rate = int(re.findall(r"^T(\d+)\*", code_name)[0])  # How does re.findall() read only in parenthesis?
                 else:
-                    tea_base_rate = self._invoice_database.find_teacher_rate(re.findall(r"^T\d+", code_name)[0])
+                    tea_base_rate = int(re.findall(r"^T\d+", code_name)[0])
 
                 tea_base_rate = abs(tea_base_rate)  # Prevent negative numbers from entering invoice.
 

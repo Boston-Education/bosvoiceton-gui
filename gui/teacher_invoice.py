@@ -10,15 +10,15 @@ FILEPATH = r"template/Teacher Base Template.xlsx"
 TEACHER_INVOICE_OUTPUT = r"base_generated/teacher/{}/{}.xlsx"
 
 class TeacherInvoice(Invoice):
-    def __init__(self, schedule_date: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
-        super().__init__(schedule_date, invoice_database, invoice_s3)
+    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
+        super().__init__(timeMin, timeMax, invoice_database, invoice_s3)
 
     def write_invoice_to_excel(self) -> None:
         tempHead = self._head
-        while tempHead != None:
+        while tempHead is not None:
             self._total_amount = 0
-            revised_date_filename = self._schedule_date.strftime(EXCEL_INVOICE_FILENAME).format(
-                "A" if self._schedule_date.day == 15 else "B", tempHead.person_name)
+            revised_date_filename = self._timeMax.strftime(EXCEL_INVOICE_FILENAME).format(
+                "A" if self._timeMax.day == 15 else "B", tempHead.person_name)
             destination = (TEACHER_INVOICE_OUTPUT.format(tempHead.person_name, revised_date_filename))
 
             is_filepath_validated = self._check_filepath_validation(tempHead.person_name, FILEPATH, destination, revised_date_filename)

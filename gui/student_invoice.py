@@ -76,14 +76,14 @@ def _name_previous_excel_date(schedule_date: datetime, student_name: str) -> str
     return datetime_result.strftime(EXCEL_INVOICE_FILENAME.format(student_name))
 
 class StudentInvoice(Invoice):
-    def __init__(self, schedule_date: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
-        super().__init__(schedule_date, invoice_database, invoice_s3)
+    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
+        super().__init__(timeMin, timeMax, invoice_database, invoice_s3)
 
     def write_invoice_to_excel(self) -> None:
         tempHead = self._head
-        while tempHead != None:
+        while tempHead is not None:
             self._total_amount = 0
-            revised_date_filename = self._schedule_date.strftime(EXCEL_INVOICE_FILENAME).format(tempHead.person_name)
+            revised_date_filename = self._timeMax.strftime(EXCEL_INVOICE_FILENAME).format(tempHead.person_name)
             destination = (STUDENT_INVOICE_OUTPUT.format(tempHead.person_name, revised_date_filename))
 
             is_filepath_validated = self._check_filepath_validation(tempHead.person_name, FILEPATH, destination, revised_date_filename)
@@ -96,7 +96,7 @@ class StudentInvoice(Invoice):
 
             local_sheet = local_workbook.active
 
-            prev_excel_date = _name_previous_excel_date(self._schedule_date, tempHead.person_name)
+            prev_excel_date = _name_previous_excel_date(self._timeMax, tempHead.person_name)
             tuition_amount = read_past_tuition_amount(STUDENT_INVOICE_OUTPUT
                                                       .format(tempHead.person_name, prev_excel_date), tempHead.person_name)
             local_sheet["G14"] = tuition_amount
@@ -132,16 +132,21 @@ class StudentInvoice(Invoice):
                     local_sheet[r"F{}".format(i)].fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
                     local_sheet[r"G{}".format(i)].fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
 
+                if tempInvoiceHead.amount <= 0:
+                    font_color = "ff0000"
+                    local_sheet[r"B{}".format(i)].font = Font(color=font_color, size=14)
+                    local_sheet[r"C{}".format(i)].font = Font(color=font_color, size=14)
+                    local_sheet[r"D{}".format(i)].font = Font(color=font_color, size=14)
+                    local_sheet[r"E{}".format(i)].font = Font(color=font_color, size=14)
+                    local_sheet[r"F{}".format(i)].font = Font(color=font_color, size=14)
+                    local_sheet[r"G{}".format(i)].font = Font(color=font_color, size=14)
+
                 local_sheet[r"B{}".format(i)] = tempInvoiceHead.date
                 local_sheet[r"C{}".format(i)] = tempInvoiceHead.subject
                 local_sheet[r"D{}".format(i)] = tempInvoiceHead.person_name   # Teacher name
                 local_sheet[r"E{}".format(i)] = tempInvoiceHead.rate
                 local_sheet[r"F{}".format(i)] = tempInvoiceHead.hour
-                if tempInvoiceHead.hour <= 0:
-                    local_sheet[r"F{}".format(i)].font = Font(color="FF0000", size=14)
                 local_sheet[r"G{}".format(i)] = tempInvoiceHead.amount
-                if tempInvoiceHead.amount <= 0:
-                    local_sheet[r"G{}".format(i)].font = Font(color="FF0000", size=14)
 
                 self._total_amount += tempInvoiceHead.amount
 

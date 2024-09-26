@@ -91,14 +91,15 @@ class CalendarData_Inner_LinkedList:
         self.next = None
 
 class Invoice:
-    def __init__(self, schedule_date: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
+    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
         self._head = None
 
         self._to_override_all = False
         self._is_override_clicked = None
 
         self._today_date = datetime.now()
-        self._schedule_date = schedule_date
+        self._timeMin = timeMin
+        self._timeMax = timeMax
         self._total_amount = 0
 
         self._invoice_database = invoice_database
@@ -116,11 +117,11 @@ class Invoice:
             self._head = tail
 
     def _create_unique_id(self, person_name: str, pay_period=False) -> str:
-        schedule_date_str = self._schedule_date.strftime("%m%y")
+        schedule_date_str = self._timeMax.strftime("%m%y")
         id_result = "".join([name[0] for name in person_name.split()])
         id_result += schedule_date_str
         if pay_period:
-            id_result += "A" if self._schedule_date.day == 15 else "B"
+            id_result += "A" if self._timeMax.day == 15 else "B"
         return id_result
 
     def store_calendar_invoice_data(self, person_name: str, invoice: CalendarData_Invoice_LinkedList):

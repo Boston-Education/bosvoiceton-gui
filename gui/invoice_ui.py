@@ -137,7 +137,7 @@ class Invoice_GUI:
         self._data_window_treeview.heading(2, text="")
         self._data_window_treeview.grid(row=1, column=0, rowspan=4, sticky=tk.NSEW, padx=DEF_PADX, pady=3)
 
-        self._student_rate_button = ttk.Button(self._tab2, text="Show Student/Teacher Code List", command=self._show_teacher_student_code)
+        self._student_rate_button = ttk.Button(self._tab2, text="Show Student/Teacher Code List")
         self._student_rate_button.grid(row=5, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
         self._student_discount_button = ttk.Button(self._tab2, text="Show Discount", command=self._show_discount_amount)
         self._student_discount_button.grid(row=6, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
@@ -170,17 +170,17 @@ class Invoice_GUI:
         # self._data_name_entry = ttk.Entry(self._tab2)
         # self._data_name_entry.grid(row=1, column=3, sticky=tk.EW + tk.N, padx=3, pady=3)
 
-        self._data_value_label = ttk.Label(self._tab2, text="Value:")
-        self._data_value_label.grid(row=1, column=2, sticky=tk.E + tk.S, padx=3, pady=3)
-        self._data_value_entry_var = tk.DoubleVar()
-        self._data_value_entry = ttk.Entry(self._tab2, textvariable=self._data_value_entry_var)
-        self._data_value_entry.bind("<FocusOut>", lambda _: self._auto_round_to_two_deci(self._data_value_entry_var))
-        self._data_value_entry.grid(row=1, column=3, sticky=tk.EW + tk.S, padx=3, pady=3)
+        self._data_parameter_label = ttk.Label(self._tab2, text="Parameter:")
+        self._data_parameter_label.grid(row=1, column=2, sticky=tk.E + tk.S, padx=3, pady=3)
+        self._data_parameter_entry_var = tk.DoubleVar()
+        self._data_parameter_entry = ttk.Entry(self._tab2, textvariable=self._data_parameter_entry_var)
+        self._data_parameter_entry.bind("<FocusOut>", lambda _: self._auto_round_to_two_deci(self._data_parameter_entry_var))
+        self._data_parameter_entry.grid(row=1, column=3, sticky=tk.EW + tk.S, padx=3, pady=3)
 
         self._data_location_label = ttk.Label(self._tab2, text="Database Location:")
         self._data_location_label.grid(row=1, column=2, sticky=tk.E, padx=3, pady=3)
         self._data_location_combobox = ttk.Combobox(self._tab2, state="readonly")
-        self._data_location_combobox['values'] = ("Student", "Discount")
+        self._data_location_combobox['values'] = ("Student", "Discount", "Course")
         self._data_location_combobox.bind("<<ComboboxSelected>>", self._data_location_event)
         self._data_location_combobox.grid(row=1, column=3, sticky=tk.EW, padx=3, pady=3)
 
@@ -303,11 +303,9 @@ class Invoice_GUI:
         self._t_asterisk.set(False)
         self._teacher_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._t_asterisk, command=self._update_preview)
         self._teacher_asterisk_checkbox.grid(row=6, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
-        self._teacher_code_combobox = ttk.Combobox(self._tab3, width=3)
-        self._teacher_code_combobox["values"] = [teachercode[0] for teachercode in self._database.get_teacher_code()]
-        self._teacher_code_combobox.bind("<<ComboboxSelected>>", self._update_preview_event)
-        self._teacher_code_combobox.bind("<KeyRelease>", self._update_preview_event)
-        self._teacher_code_combobox.grid(row=5, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
+        self._teacher_code_spinbox = ttk.Spinbox(self._tab3, from_=0, to=999, increment=1, width=4, command=self._update_preview)
+        self._teacher_code_spinbox.bind("<KeyRelease>", self._update_preview_event)
+        self._teacher_code_spinbox.grid(row=5, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
 
         self._student_code_text = ttk.Label(self._tab3, text="S")
         self._student_code_text.grid(row=5, column=5, sticky=tk.E, padx=DEF_PADX, pady=2)
@@ -316,11 +314,9 @@ class Invoice_GUI:
         self._s_asterisk.set(False)
         self._student_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._s_asterisk, command=self._update_preview)
         self._student_asterisk_checkbox.grid(row=6, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
-        self._student_code_combobox = ttk.Combobox(self._tab3, width=3)
-        self._student_code_combobox["values"] = [studentcode[0] for studentcode in self._database.get_student_code()]
-        self._student_code_combobox.bind("<<ComboboxSelected>>", self._update_preview_event)
-        self._student_code_combobox.bind("<KeyRelease>", self._update_preview_event)
-        self._student_code_combobox.grid(row=5, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
+        self._student_code_spinbox = ttk.Spinbox(self._tab3, from_=0, to=999, increment=1, width=4, command=self._update_preview)
+        self._student_code_spinbox.bind("<KeyRelease>", self._update_preview_event)
+        self._student_code_spinbox.grid(row=5, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
 
         self._online = tk.BooleanVar()
         self._online.set(False)
@@ -421,20 +417,21 @@ class Invoice_GUI:
     def _process_database(self) -> None:
         student_name = self._data_name_combobox.get()
 
-        if len(student_name) == 0:
+        name_combobox_state = self._data_name_combobox.__getstate__()
+        if len(student_name) == 0 and name_combobox_state == "normal":
             self._data_message_output.configure(
                 text="Please input the student name entry!")
             return
 
         try:
-            amount = self._data_value_entry_var.get()
+            parameter = self._data_parameter_entry_var.get()
         except tk.TclError:
-            self._data_message_output.configure(text="ERROR: Only digits are supported for the 'Value' entry. Please try another input!")
+            self._data_message_output.configure(text="ERROR: Invalid parameter entry. Please try another input!")
             return
 
         data_option_mode = self._data_options_var.get()
         name_checker = self._database.find_student_info(student_name)
-        if name_checker == None and data_option_mode != 1:
+        if name_checker == None and data_option_mode != 1 and name_combobox_state == "normal":
             self._data_message_output.configure(
                 text="ERROR: Cannot find a student named {}! Please try another input!".format(student_name))
             return
@@ -445,14 +442,16 @@ class Invoice_GUI:
             if data_combo == "Student":
                 data_status = self._database.create_student_info(student_name)
             elif data_combo == "Discount":
-                data_status = self._database.create_discount_amount(student_name, amount)
+                data_status = self._database.create_discount_amount(student_name, parameter)
+            elif data_combo == "Course":
+                data_status = self._database.create_course_info(parameter)
             else:
                 self._data_message_output.configure(
                     text="ERROR: Please specify the database location!")
                 return
         elif data_option_mode == 2:     # Update
             if data_combo == "Discount":
-                data_status = self._database.set_discount_amount(student_name, amount)
+                data_status = self._database.set_discount_amount(student_name, parameter)
             else:
                 self._data_message_output.configure(
                     text="ERROR: Please specify the database location!")
@@ -466,6 +465,8 @@ class Invoice_GUI:
                 data_status = self._database.delete_student_info(student_name)
             elif data_combo == "Discount":
                 data_status = self._database.delete_discount_amount(student_name)
+            elif data_combo == "Course":
+                data_status = self._database.delete_course_info(parameter)
             else:
                 self._data_message_output.configure(
                     text="ERROR: Please specify the database location!")
@@ -530,25 +531,6 @@ class Invoice_GUI:
         self._data_window_treeview.column(2, stretch=tk.NO, width=70)
         self._data_window_treeview.heading(2, text="")
 
-    def _show_teacher_student_code(self) -> None:
-        self._clear_data_window()
-
-        self._data_window_treeview.column(0, stretch=tk.NO, width=100)
-        self._data_window_treeview.heading(0, text="Code", command=lambda: self._sort_treeview(self._data_window_treeview, "c1", False))
-        self._data_window_treeview.column(1, stretch=tk.NO, width=115)
-        self._data_window_treeview.heading(1, text="Rate", command=lambda: self._sort_treeview(self._data_window_treeview, "c2", False))
-        self._data_window_treeview.column(2, stretch=tk.NO, width=0)
-        self._data_window_treeview.heading(2, text="")
-
-        tea_exec_result = self._database.get_teacher_code()
-        stu_exec_result = self._database.get_student_code()
-
-        for i in tea_exec_result:
-            self._data_window_treeview.insert("", "end", values=tuple(i))
-        self._data_window_treeview.insert("", "end", values=("", "", ""))
-        for i in stu_exec_result:
-            self._data_window_treeview.insert("", "end", values=tuple(i))
-
     def _show_discount_amount(self) -> None:
         self._clear_data_window()
 
@@ -595,21 +577,31 @@ class Invoice_GUI:
         tree.heading(col, command=lambda: self._sort_treeview(tree, col, not descending))
 
     def _data_location_event(self, event):
-        self._data_value_entry.configure(state="normal")
+        self._data_name_combobox.configure(state="normal")
+        # entry_var_mem_placeholder = self._data_parameter_entry_var.get()    # Prevent entry from resetting after selecting from combobox
+        self._data_parameter_entry_var = tk.DoubleVar()
+        self._data_parameter_entry.configure(state="normal", textvariable=self._data_parameter_entry_var)
         data_combo = self._data_location_combobox.get()
         if data_combo == "Student":
-            self._data_value_entry.configure(state="disabled")
+            self._data_parameter_entry.configure(state="disabled")
+        elif data_combo == "Course":
+            self._data_name_combobox.configure(state="disabled")
+            self._data_parameter_entry_var = tk.StringVar()
+            self._data_parameter_entry.configure(textvariable=self._data_parameter_entry_var)
+
+        # self._data_parameter_entry.delete(0, tk.END)
+        # self._data_parameter_entry.insert(0, entry_var_mem_placeholder)
 
     def _data_location(self):
         self._data_location_combobox.set("")
 
         data_option_mode = self._data_options_var.get()
         if data_option_mode == 1:
-            self._data_location_combobox['values'] = ("Student", "Discount")
+            self._data_location_combobox['values'] = ("Student", "Discount", "Course")
         elif data_option_mode == 2:
-            self._data_location_combobox['values'] = "Discount"
+            self._data_location_combobox['values'] = ("Discount", "Course")
         elif data_option_mode == 3:
-            self._data_location_combobox['values'] = ("Student", "Discount")
+            self._data_location_combobox['values'] = ("Student", "Discount", "Course")
 
     def _update_payment(self):
         payment_amount = self._payment_amount_entry_var.get()
@@ -695,13 +687,13 @@ class Invoice_GUI:
         else:
             first_str = ""
 
-        self._preview_string = "{}{} - {} - {} - {}{}{}{} - {}".format(first_str,
+        self._preview_string = "{}{} - {} - {} - T{}{}S{}{} - {}".format(first_str,
                                                             self._teacher_name_entry.get().title(),
                                                             self._student_name_entry.get().title(),
                                                             self._class_name_combobox.get(),
-                                                            self._teacher_code_combobox.get(),
+                                                            self._teacher_code_spinbox.get(),
                                                                        "*" if self._t_asterisk.get() else "",
-                                                            self._student_code_combobox.get(),
+                                                            self._student_code_spinbox.get(),
                                                                        "*" if self._s_asterisk.get() else "",
                                                             "Online" if self._online.get() else "In Person")
         self._preview.set(self._preview_string)
@@ -710,7 +702,10 @@ class Invoice_GUI:
         self._update_preview()
 
     def _auto_round_to_two_deci(self, float_var: tk.DoubleVar):
-        float_var.set(round(float_var.get(), 2))
+        try:
+            float_var.set(round(float_var.get(), 2))
+        except TypeError:
+            pass
 
     def run(self) -> None:
         self._window.mainloop()
