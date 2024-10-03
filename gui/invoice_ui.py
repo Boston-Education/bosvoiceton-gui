@@ -153,13 +153,13 @@ class Invoice_GUI:
 
         self._data_options_var = tk.IntVar()
         self._add_option = ttk.Radiobutton(self._tab2, text="Add",
-                                           variable=self._data_options_var, value=1, command=self._data_location)
+                                           variable=self._data_options_var, value=1)
         self._add_option.grid(row=1, column=1, sticky=tk.N, padx=3, pady=3)
         self._update_option = ttk.Radiobutton(self._tab2, text="Update",
-                                              variable=self._data_options_var, value=2, command=self._data_location)
+                                              variable=self._data_options_var, value=2)
         self._update_option.grid(row=1, column=1, padx=3, pady=3)
         self._delete_option = ttk.Radiobutton(self._tab2, text="Delete",
-                                              variable=self._data_options_var, value=3, command=self._data_location)
+                                              variable=self._data_options_var, value=3)
         self._delete_option.grid(row=1, column=1, sticky=tk.S, padx=3, pady=3)
 
         self._data_name_label = ttk.Label(self._tab2, text="Student FULL Name:")
@@ -192,8 +192,8 @@ class Invoice_GUI:
         self._data_sendrequest_button = ttk.Button(self._tab2, text="Send Request", command=self._process_database)
         self._data_sendrequest_button.grid(row=2, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=DEF_PADY)
 
-        self._data_message_output = ttk.Label(self._tab2, text="")
-        self._data_message_output.grid(row=2, column=1, columnspan=4, sticky=tk.W, padx=3)
+        # self._data_message_output = ttk.Label(self._tab2, text="")
+        # self._data_message_output.grid(row=2, column=1, columnspan=4, sticky=tk.W, padx=3)
 
         self._payment_label = ttk.Label(self._tab2, text="Payment:")
         self._payment_label.grid(row=2, column=1, sticky=tk.EW + tk.S, padx=3, pady=DEF_PADY)
@@ -415,72 +415,62 @@ class Invoice_GUI:
             self._ifl = None
 
     def _process_database(self) -> None:
-        student_name = self._data_name_combobox.get()
-
-        name_combobox_state = self._data_name_combobox.__getstate__()
-        if len(student_name) == 0 and name_combobox_state == "normal":
-            self._data_message_output.configure(
-                text="Please input the student name entry!")
-            return
-
         try:
-            parameter = self._data_parameter_entry_var.get()
-        except tk.TclError:
-            self._data_message_output.configure(text="ERROR: Invalid parameter entry. Please try another input!")
-            return
-
-        data_option_mode = self._data_options_var.get()
-        name_checker = self._database.find_student_info(student_name)
-        if name_checker == None and data_option_mode != 1 and name_combobox_state == "normal":
-            self._data_message_output.configure(
-                text="ERROR: Cannot find a student named {}! Please try another input!".format(student_name))
-            return
-
-        data_combo = self._data_location_combobox.get()
-
-        if data_option_mode == 1:       # Add
-            if data_combo == "Student":
-                data_status = self._database.create_student_info(student_name)
-            elif data_combo == "Discount":
-                data_status = self._database.create_discount_amount(student_name, parameter)
-            elif data_combo == "Course":
-                data_status = self._database.create_course_info(parameter)
+            student_name = self._data_name_combobox.get()
+            name_combobox_state = self._data_name_combobox.__getstate__()
+            
+            if len(student_name) == 0 and name_combobox_state == "normal":
+                raise Exception("Please input the student name entry!")
+    
+            try:
+                parameter = self._data_parameter_entry_var.get()
+            except tk.TclError:
+                raise Exception("ERROR: Invalid parameter entry. Please try another input!")
+    
+            data_option_mode = self._data_options_var.get()
+            name_checker = self._database.find_student_info(student_name)
+            if name_checker == None and data_option_mode != 1 and name_combobox_state == "normal":
+                raise Exception("ERROR: Cannot find a student named {}! Please try another input!".format(student_name))
+    
+            data_combo = self._data_location_combobox.get()
+    
+            if data_option_mode == 1:       # Add
+                if data_combo == "Student":
+                    data_status = self._database.create_student_info(student_name)
+                elif data_combo == "Discount":
+                    data_status = self._database.create_discount_amount(student_name, parameter)
+                elif data_combo == "Course":
+                    data_status = self._database.create_course_info(parameter)
+                else:
+                    raise Exception("ERROR: Please specify the database location!")
+            elif data_option_mode == 2:     # Update
+                if data_combo == "Discount":
+                    data_status = self._database.set_discount_amount(student_name, parameter)
+                else:
+                    raise Exception("ERROR: Please specify the database location!")
+            elif data_option_mode == 3:       # Delete
+                if data_combo == "Student":
+                    if not messagebox.askyesno(title="Deletion Warning", message="Deleting student name will also delete any data companion such as discount.\n\n"
+                                                                                 "Do you wish to continue? THIS ACTION CANNOT BE UNDONE!", icon="warning"):
+                        return
+    
+                    data_status = self._database.delete_student_info(student_name)
+                elif data_combo == "Discount":
+                    data_status = self._database.delete_discount_amount(student_name)
+                elif data_combo == "Course":
+                    data_status = self._database.delete_course_info(parameter)
+                else:
+                    raise Exception("ERROR: Please specify the database location!")
             else:
-                self._data_message_output.configure(
-                    text="ERROR: Please specify the database location!")
-                return
-        elif data_option_mode == 2:     # Update
-            if data_combo == "Discount":
-                data_status = self._database.set_discount_amount(student_name, parameter)
+                raise Exception("Option button not selected (Add/Update/Delete)!\nClick one of the following to proceed!")
+            if data_status:
+                self._data_name_combobox.delete(0, tk.END)
+                self._data_name_combobox["values"] = [name[0] for name in sorted(self._database.get_all_student_name(), key=lambda x: x[0])]
+                messagebox.showinfo(message="Successfully executed prompt!")
             else:
-                self._data_message_output.configure(
-                    text="ERROR: Please specify the database location!")
-                return
-        elif data_option_mode == 3:       # Delete
-            if data_combo == "Student":
-                if not messagebox.askyesno(title="Deletion Warning", message="Deleting student name will also delete any data companion such as discount.\n\n"
-                                                                             "Do you wish to continue? THIS ACTION CANNOT BE UNDONE!", icon="warning"):
-                    return
-
-                data_status = self._database.delete_student_info(student_name)
-            elif data_combo == "Discount":
-                data_status = self._database.delete_discount_amount(student_name)
-            elif data_combo == "Course":
-                data_status = self._database.delete_course_info(parameter)
-            else:
-                self._data_message_output.configure(
-                    text="ERROR: Please specify the database location!")
-                return
-        else:
-            self._data_message_output.configure(
-                text="Option button not selected (Add/Update/Delete)!\nClick one of the following to proceed!")
-            return
-        if data_status:
-            self._data_name_combobox.delete(0, tk.END)
-            self._data_name_combobox["values"] = [name[0] for name in sorted(self._database.get_all_student_name(), key=lambda x: x[0])]
-            self._data_message_output.configure(text="Successfully executed prompt!")
-        else:
-            self._data_message_output.configure(text="ERROR: Database cannot find the input specified or it already exists!")
+                raise Exception("ERROR: Database cannot find the input specified or it already exists!")
+        except Exception as e:
+            messagebox.showerror(title="Database Aborted!", message=str(e))
 
     # def _day_manipulator(self, event) -> None:
     #     day_value = 15
@@ -592,16 +582,16 @@ class Invoice_GUI:
         # self._data_parameter_entry.delete(0, tk.END)
         # self._data_parameter_entry.insert(0, entry_var_mem_placeholder)
 
-    def _data_location(self):
-        self._data_location_combobox.set("")
-
-        data_option_mode = self._data_options_var.get()
-        if data_option_mode == 1:
-            self._data_location_combobox['values'] = ("Student", "Discount", "Course")
-        elif data_option_mode == 2:
-            self._data_location_combobox['values'] = ("Discount", "Course")
-        elif data_option_mode == 3:
-            self._data_location_combobox['values'] = ("Student", "Discount", "Course")
+    # def _data_location(self):
+    #     self._data_location_combobox.set("")
+    #
+    #     data_option_mode = self._data_options_var.get()
+    #     if data_option_mode == 1:
+    #         self._data_location_combobox['values'] = ("Student", "Discount", "Course")
+    #     elif data_option_mode == 2:
+    #         self._data_location_combobox['values'] = ("Discount", "Course")
+    #     elif data_option_mode == 3:
+    #         self._data_location_combobox['values'] = ("Student", "Discount", "Course")
 
     def _update_payment(self):
         payment_amount = self._payment_amount_entry_var.get()
