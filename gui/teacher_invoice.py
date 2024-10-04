@@ -26,17 +26,21 @@ class TeacherInvoice(Invoice):
                 tempHead = tempHead.next
                 continue
 
+            # Open workbook and activate current sheet
             local_workbook = openpyxl.load_workbook(destination)
             local_workbook["root"].title = revised_date_filename
-
             local_sheet = local_workbook.active
 
-            local_sheet["G3"] = self._today_date.strftime("%b. %d, %Y")
+            timeMin_str = self._timeMin.strftime("%m/%d")
+            timeMax_str = self._timeMax.strftime("%m/%d")
+            local_sheet["G3"] = "{}-{}".format(timeMin_str, timeMax_str)
+
             if local_sheet.cell(row=2, column=7).value == None:
                 local_sheet["G2"] = tempHead.invoice_id
             local_sheet["F5"] = tempHead.person_name
 
             i = 11
+            total_hours = 0
             prevtempInvoiceHead = None  # Had to include previous node since rows insert above from the current index.
             tempInvoiceHead = tempHead.invoice
             while tempInvoiceHead != None:
@@ -69,13 +73,21 @@ class TeacherInvoice(Invoice):
                 local_sheet[r"F{}".format(i)] = tempInvoiceHead.hour
                 local_sheet[r"G{}".format(i)] = tempInvoiceHead.amount
 
+                total_hours += tempInvoiceHead.hour
                 self._total_amount += tempInvoiceHead.amount
 
                 i += 1
                 prevtempInvoiceHead = tempInvoiceHead
                 tempInvoiceHead = tempInvoiceHead.next
 
-            for i in range(42, 499):
+            for i in range(25, 499):
+                if not str(local_sheet.cell(row=i, column=5).value).startswith("Hours"):
+                    continue
+
+                local_sheet.cell(row=i, column=6).value = total_hours
+                break
+
+            for i in range(31, 499):
                 if not str(local_sheet.cell(row=i, column=6).value).startswith("Total"):
                     continue
 

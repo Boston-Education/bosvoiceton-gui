@@ -91,17 +91,20 @@ class StudentInvoice(Invoice):
                 tempHead = tempHead.next
                 continue
 
+            # Open workbook and activate current sheet
             local_workbook = openpyxl.load_workbook(destination)
             local_workbook["root"].title = revised_date_filename
-
             local_sheet = local_workbook.active
 
             prev_excel_date = _name_previous_excel_date(self._timeMax, tempHead.person_name)
             tuition_amount = read_past_tuition_amount(STUDENT_INVOICE_OUTPUT
                                                       .format(tempHead.person_name, prev_excel_date), tempHead.person_name)
             local_sheet["G14"] = tuition_amount
-            #self._total_amount += local_sheet["G14"].value
-            local_sheet["G3"] = self._today_date.strftime("%b. %d, %Y")
+
+            timeMin_str = self._timeMin.strftime("%m/%d")
+            timeMax_str = self._timeMax.strftime("%m/%d")
+            local_sheet["G3"] = "{}-{}".format(timeMin_str, timeMax_str)
+
             if local_sheet.cell(row=4, column=7).value == None:
                 local_sheet["G4"] = tempHead.invoice_id
             local_sheet["G6"] = tempHead.person_name

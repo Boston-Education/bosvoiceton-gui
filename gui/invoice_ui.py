@@ -17,7 +17,7 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-VERSION = "v0.1.3-beta"
+VERSION = "v0.2.0-beta"
 
 DEF_PADX = 10
 DEF_PADY = 10
@@ -137,7 +137,7 @@ class Invoice_GUI:
         self._data_window_treeview.heading(2, text="")
         self._data_window_treeview.grid(row=1, column=0, rowspan=4, sticky=tk.NSEW, padx=DEF_PADX, pady=3)
 
-        self._student_rate_button = ttk.Button(self._tab2, text="Show Student/Teacher Code List")
+        self._student_rate_button = ttk.Button(self._tab2, text="<Vacant>")
         self._student_rate_button.grid(row=5, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
         self._student_discount_button = ttk.Button(self._tab2, text="Show Discount", command=self._show_discount_amount)
         self._student_discount_button.grid(row=6, column=0, sticky=tk.EW, padx=DEF_PADX, pady=3)
@@ -226,8 +226,8 @@ class Invoice_GUI:
         self._payment_apply_button = ttk.Button(self._tab2, text="Make Payment", command=self._update_payment)
         self._payment_apply_button.grid(row=4, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=DEF_PADY)
 
-        self._payment_message_label = ttk.Label(self._tab2, text="")
-        self._payment_message_label.grid(row=4, column=1, rowspan=2, columnspan=4, sticky=tk.W, padx=3)
+        # self._payment_message_label = ttk.Label(self._tab2, text="")
+        # self._payment_message_label.grid(row=4, column=1, rowspan=2, columnspan=4, sticky=tk.W, padx=3)
 
         ###############################
         # [CALENDAR FORMATTER (TAB3)] #
@@ -299,22 +299,24 @@ class Invoice_GUI:
         self._teacher_code_text = ttk.Label(self._tab3, text="T")
         self._teacher_code_text.grid(row=5, column=3, sticky=tk.E, padx=DEF_PADX, pady=2)
 
-        self._t_asterisk = tk.BooleanVar()
-        self._t_asterisk.set(False)
-        self._teacher_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._t_asterisk, command=self._update_preview)
-        self._teacher_asterisk_checkbox.grid(row=6, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
-        self._teacher_code_spinbox = ttk.Spinbox(self._tab3, from_=0, to=999, increment=1, width=4, command=self._update_preview)
+        # self._t_asterisk = tk.BooleanVar()
+        # self._t_asterisk.set(False)
+        # self._teacher_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._t_asterisk, command=self._update_preview)
+        # self._teacher_asterisk_checkbox.grid(row=6, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
+        self._teacher_code_spinbox = ttk.Spinbox(self._tab3, from_=0, to=999, increment=1, width=5, command=self._update_preview)
+        self._teacher_code_spinbox.set(0)
         self._teacher_code_spinbox.bind("<KeyRelease>", self._update_preview_event)
         self._teacher_code_spinbox.grid(row=5, column=4, sticky=tk.W, padx=DEF_PADX, pady=2)
 
         self._student_code_text = ttk.Label(self._tab3, text="S")
         self._student_code_text.grid(row=5, column=5, sticky=tk.E, padx=DEF_PADX, pady=2)
 
-        self._s_asterisk = tk.BooleanVar()
-        self._s_asterisk.set(False)
-        self._student_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._s_asterisk, command=self._update_preview)
-        self._student_asterisk_checkbox.grid(row=6, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
-        self._student_code_spinbox = ttk.Spinbox(self._tab3, from_=0, to=999, increment=1, width=4, command=self._update_preview)
+        # self._s_asterisk = tk.BooleanVar()
+        # self._s_asterisk.set(False)
+        # self._student_asterisk_checkbox = ttk.Checkbutton(self._tab3, text="*", variable=self._s_asterisk, command=self._update_preview)
+        # self._student_asterisk_checkbox.grid(row=6, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
+        self._student_code_spinbox = ttk.Spinbox(self._tab3, from_=0, to=999, increment=1, width=5, command=self._update_preview)
+        self._student_code_spinbox.set(0)
         self._student_code_spinbox.bind("<KeyRelease>", self._update_preview_event)
         self._student_code_spinbox.grid(row=5, column=6, sticky=tk.W, padx=DEF_PADX, pady=2)
 
@@ -417,8 +419,8 @@ class Invoice_GUI:
     def _process_database(self) -> None:
         try:
             student_name = self._data_name_combobox.get()
-            name_combobox_state = self._data_name_combobox.__getstate__()
-            
+            name_combobox_state = str(self._data_name_combobox["state"])
+
             if len(student_name) == 0 and name_combobox_state == "normal":
                 raise Exception("Please input the student name entry!")
     
@@ -594,32 +596,32 @@ class Invoice_GUI:
     #         self._data_location_combobox['values'] = ("Student", "Discount", "Course")
 
     def _update_payment(self):
-        payment_amount = self._payment_amount_entry_var.get()
-        if payment_amount <= 0:
-            self._payment_message_label.configure(text="Please enter an amount greater than 0.")
-            return
-
-        payment_type = self._payment_type_combobox.get()
-        if payment_type not in self._payment_type_combobox["values"]:
-            self._payment_message_label.configure(text="ERROR: Invalid payment type!")
-            return
-
-        student = self._database.find_student_info(self._payment_name_combobox.get())
-        if student == None:
-            self._payment_message_label.configure(text="ERROR: No student exists in our database!")
-            return
-
         try:
-            student_invoice.update_tuition_amount(student[0].title(), payment_amount, payment_type)
-            self._payment_message_label.configure(text="Successfully executed prompt!")
-            self._payment_name_combobox.delete(0, tk.END)
-        except FileNotFoundError:
-            self._payment_message_label.configure(text="ERROR: Unable to locate file when attempting to access!\n"
-                                                       "Make sure the sheet exists in this student name and try again!")
-        except IndexError:
-            self._payment_message_label.configure(text="ERROR: Found empty folder in this student name!")
-        except PermissionError:
-            self._payment_message_label.configure(text="ERROR: Permission denied! Close the current sheet application and try again!")
+            payment_amount = self._payment_amount_entry_var.get()
+            if payment_amount <= 0:
+                raise Exception("Please enter an amount greater than 0.")
+    
+            payment_type = self._payment_type_combobox.get()
+            if payment_type not in self._payment_type_combobox["values"]:
+                raise Exception("ERROR: Invalid payment type!")
+    
+            student = self._database.find_student_info(self._payment_name_combobox.get())
+            if student is None:
+                raise Exception("ERROR: No student exists in our database!")
+    
+            try:
+                student_invoice.update_tuition_amount(student[0].title(), payment_amount, payment_type)
+                messagebox.showinfo(message="Successfully executed prompt!")
+                self._payment_name_combobox.delete(0, tk.END)
+            except FileNotFoundError:
+                raise Exception("ERROR: Unable to locate file when attempting to access!\n"
+                                                           "Make sure the sheet exists in this student name and try again!")
+            except IndexError:
+                raise Exception("ERROR: Found empty folder in this student name!")
+            except PermissionError:
+                raise Exception("ERROR: Permission denied! Close the current sheet application and try again!")
+        except Exception as e:
+            messagebox.showerror(title="Payment Aborted!", message=str(e))
 
     def _update_teacher_listbox(self, event=None):
         value = re.split(r",(?:\s*)", self._teacher_name_entry.get())[-1]
@@ -677,16 +679,19 @@ class Invoice_GUI:
         else:
             first_str = ""
 
-        self._preview_string = "{}{} - {} - {} - T{}{}S{}{} - {}".format(first_str,
-                                                            self._teacher_name_entry.get().title(),
-                                                            self._student_name_entry.get().title(),
-                                                            self._class_name_combobox.get(),
-                                                            self._teacher_code_spinbox.get(),
-                                                                       "*" if self._t_asterisk.get() else "",
-                                                            self._student_code_spinbox.get(),
-                                                                       "*" if self._s_asterisk.get() else "",
-                                                            "Online" if self._online.get() else "In Person")
-        self._preview.set(self._preview_string)
+        try:
+            hex_teacher_code_convert = hex(int(self._teacher_code_spinbox.get())).lstrip("0x").rstrip("L")
+            hex_student_code_convert = hex(int(self._student_code_spinbox.get())).lstrip("0x").rstrip("L")
+            self._preview_string = "{}{} - {} - {} - T{}S{} - {}".format(first_str,
+                                                                self._teacher_name_entry.get().title(),
+                                                                self._student_name_entry.get().title(),
+                                                                self._class_name_combobox.get(),
+                                                                hex_teacher_code_convert,
+                                                                hex_student_code_convert,
+                                                                "Online" if self._online.get() else "In Person")
+            self._preview.set(self._preview_string)
+        except ValueError:
+            pass
 
     def _update_preview_event(self, event) -> None:
         self._update_preview()

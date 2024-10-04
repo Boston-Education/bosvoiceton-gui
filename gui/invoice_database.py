@@ -34,7 +34,6 @@ class InvoiceDatabase:
                 print(err)
 
         self._rates_db.commit()
-        print("Done!")
 
     def __del__(self):
         try:
@@ -88,6 +87,9 @@ class InvoiceDatabase:
     #     return exec_result[0] if exec_result != None else None
 
     def create_discount_amount(self, student_name: str, amount: float):
+        self._cursor.execute("SELECT student_name FROM student WHERE student_name = '{}'".format(student_name))
+        if self._cursor.fetchall() != []:
+            return False
         self._cursor.execute("INSERT INTO student_discount (stu_id, disc_rate)\n"
                              "SELECT id, {} FROM student WHERE student.student_name = '{}'".format(round(amount, 2), student_name))
         self._rates_db.commit()
@@ -98,7 +100,7 @@ class InvoiceDatabase:
                              "INNER JOIN student ON student.id = student_discount.stu_id\n"
                              "WHERE student.student_name = '{}'".format(student_name))
         exec_result = self._cursor.fetchone()
-        return exec_result[0] if exec_result != None else None
+        return exec_result[0] if exec_result is not None else None
 
     def get_all_discount_amount(self):
         self._cursor.execute("SELECT student.id, student.student_name, disc_rate FROM student_discount\n"
@@ -106,7 +108,7 @@ class InvoiceDatabase:
         return self._cursor.fetchall()
 
     def set_discount_amount(self, student_name: str, amount: float):
-        if self.get_discount_amount(student_name) == None:
+        if self.get_discount_amount(student_name) is None:
             return False
         self._cursor.execute("UPDATE student_discount INNER JOIN student ON student.id = student_discount.stu_id\n"
                              "SET student_discount.disc_rate = {}\n"
@@ -115,7 +117,7 @@ class InvoiceDatabase:
         return True
 
     def delete_discount_amount(self, student_name: str):
-        if self.get_discount_amount(student_name) == None:
+        if self.get_discount_amount(student_name) is None:
             return False
         self._cursor.execute("DELETE FROM student_discount WHERE stu_id = \n"
                              "(SELECT id FROM student WHERE student.student_name = '{}')".format(student_name.title()))
@@ -151,19 +153,23 @@ class InvoiceDatabase:
     #     return True
 
     def create_course_info(self, course_name: str):
-        is_course_AP = bool(re.search(r"^(?:\s*)(ap)(?:\s+)", course_name.upper()))
-        is_course_HONORS = bool(re.search(r"^(?:\s*)(h|honors)(?:\s+)", course_name.upper()))
         self._cursor.execute("SELECT course_name FROM course WHERE course_name = '{}'".format(course_name))
         if self._cursor.fetchall() != []:
             return False
+        is_course_AP = bool(re.search(r"^(?:\s*)(AP)(?:\s+)", course_name.upper()))
+        is_course_HONORS = bool(re.search(r"^(?:\s*)(H|HONORS)(?:\s+)", course_name.upper()))
         self._cursor.execute("INSERT INTO course (ap, honors, course_name) VALUES ({}, {}, '{}')".format(is_course_AP, is_course_HONORS, course_name.strip()))
         self._rates_db.commit()
         return True
 
     def get_course_info(self, course_name: str):
-        pass
+        self._cursor.execute("SELECT course_name FROM course WHERE course_name = '{}'".format(course_name))
+        return self._cursor.fetchone()
 
     def delete_course_info(self, course_name: str):
+        if self.get_course_info(course_name) is None:
+            return False
+
         self._cursor.execute("DELETE FROM course WHERE course_name = '{}'".format(course_name))
         self._rates_db.commit()
         return True
@@ -175,11 +181,3 @@ class InvoiceDatabase:
     def get_all_class_row(self):
         self._cursor.execute("SELECT ap, honors, course_name FROM course")
         return self._cursor.fetchall()
-
-    # def create_invoice_data(self, schedule_date, student_name: str, class_name: str, hour: float):
-    #     self._cursor.execute("INSERT INTO stusale(LDate, StuID, SubID, LHour)\n"
-    #                          "SELECT id"
-    #                          "VALUES ({}, {}, {}, {})".format(schedule_date, student_name, class_name, hour))
-
-if __name__ == "__main__":
-    print(InvoiceDatabase().delete_course_info("DDDDDD"))

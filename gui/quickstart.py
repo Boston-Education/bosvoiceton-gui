@@ -80,7 +80,7 @@ class BostonEDU_Google_Calendar:
                 .list(
                     calendarId="primary",
                     timeMax=timeMax_fixed,
-                    timeMin=self._timeMin,
+                    timeMin=self._timeMin.isoformat(),
                     singleEvents=True,
                     orderBy="startTime",
                     maxResults=2500,
@@ -169,11 +169,7 @@ class BostonEDU_Google_Calendar:
 
             code_name = lineitem.get_code_names()
 
-            if re.search(r"S\d+\*$", code_name):
-                stu_base_rate = int(re.findall(r"S(\d+)\*$", code_name)[0])    # How does re.findall() read only in parenthesis?
-            else:
-                stu_base_rate = int(re.findall(r"S\d+$", code_name)[0])
-
+            stu_base_rate = int(re.findall(r"S([0-9a-fA-F])+$", code_name)[0], 16)
             stu_base_rate = abs(stu_base_rate)  # Prevent negative numbers from entering invoice.
 
             for student in lineitem.get_student_names():
@@ -226,11 +222,7 @@ class BostonEDU_Google_Calendar:
 
                 code_name = lineitem.get_code_names()
 
-                if re.search(r"^T\d+\*", code_name):
-                    tea_base_rate = int(re.findall(r"^T(\d+)\*", code_name)[0])  # How does re.findall() read only in parenthesis?
-                else:
-                    tea_base_rate = int(re.findall(r"^T\d+", code_name)[0])
-
+                tea_base_rate = int(re.findall(r"^T([0-9a-fA-F])+", code_name)[0], 16)
                 tea_base_rate = abs(tea_base_rate)  # Prevent negative numbers from entering invoice.
 
                 teacher_date = schedule_date.strftime("%m/%d/%Y")
