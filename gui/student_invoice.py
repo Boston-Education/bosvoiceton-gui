@@ -5,7 +5,7 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 from datetime import datetime
 
-from invoice_s3 import InvoiceS3
+# from invoice_s3 import InvoiceS3
 from invoice_database import InvoiceDatabase
 from invoice import Invoice, CalendarData_Invoice_LinkedList, _copy_range
 
@@ -76,8 +76,8 @@ def _name_previous_excel_date(schedule_date: datetime, student_name: str) -> str
     return datetime_result.strftime(EXCEL_INVOICE_FILENAME.format(student_name))
 
 class StudentInvoice(Invoice):
-    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
-        super().__init__(timeMin, timeMax, invoice_database, invoice_s3)
+    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase):
+        super().__init__(timeMin, timeMax, invoice_database)
 
     def write_invoice_to_excel(self) -> None:
         tempHead = self._head
@@ -190,8 +190,8 @@ class StudentInvoice(Invoice):
             local_workbook.save(destination)
             local_workbook.close()
 
-            if not self._invoice_s3 is None:
-                self._invoice_s3.upload_file(destination, destination)
+            # if not self._invoice_s3 is None:
+            #     self._invoice_s3.upload_file(destination, destination)
 
             tempHead = tempHead.next
         print("Finished writing student excel sheet!")

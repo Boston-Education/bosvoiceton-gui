@@ -2,7 +2,7 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 from datetime import datetime
 
-from invoice_s3 import InvoiceS3
+# from invoice_s3 import InvoiceS3
 from invoice_database import InvoiceDatabase
 from invoice import Invoice, CalendarData_Invoice_LinkedList, _copy_range, EXCEL_INVOICE_FILENAME
 
@@ -10,8 +10,8 @@ FILEPATH = r"template/Teacher Base Template.xlsx"
 TEACHER_INVOICE_OUTPUT = r"base_generated/teacher/{}/{}.xlsx"
 
 class TeacherInvoice(Invoice):
-    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
-        super().__init__(timeMin, timeMax, invoice_database, invoice_s3)
+    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase):
+        super().__init__(timeMin, timeMax, invoice_database)
 
     def write_invoice_to_excel(self) -> None:
         tempHead = self._head
@@ -98,8 +98,8 @@ class TeacherInvoice(Invoice):
             local_workbook.save(destination)
             local_workbook.close()
 
-            if not self._invoice_s3 is None:
-                self._invoice_s3.upload_file(destination, destination)
+            # if not self._invoice_s3 is None:
+            #     self._invoice_s3.upload_file(destination, destination)
 
             tempHead = tempHead.next
         print("Finished writing teacher excel sheet!")

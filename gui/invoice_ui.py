@@ -500,7 +500,7 @@ class Invoice_GUI:
         print("Date set to {} {}! Initializing data from Google Calendar!".format(self._month_combobox.get(), self._year_combobox.get()))
         print(f"{"Waiting for authorization...":-^80}")
 
-        bost_google_cal = BostonEDU_Google_Calendar(self._database, self._s3_bucket)
+        bost_google_cal = BostonEDU_Google_Calendar(self._database)
         bost_google_cal.read_calendar_info(month, 1, 15, year, True)
         bost_google_cal.read_calendar_info(month, 16, calendar.monthrange(year, month)[1], year, True)
         bost_google_cal.read_calendar_info(month, 1, calendar.monthrange(year, month)[1], year, False)

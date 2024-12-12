@@ -16,7 +16,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-from invoice_s3 import InvoiceS3
+# from invoice_s3 import InvoiceS3
 from invoice_database import InvoiceDatabase
 from invoice import Invoice, CalendarData_Invoice_LinkedList
 from calendar_title import LineItem
@@ -33,10 +33,9 @@ RE_NOSHOW = r"(?:\s*)\((?:\s*)(N|n)(S|s)(?:\s*)\)(?:\s*)"
 RE_PARENTHESIS = r"(?:\s*)\((?:\s*)(\S|\s)*(?:\s*)\)(?:\s*)"
 
 class BostonEDU_Google_Calendar:
-    def __init__(self, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
+    def __init__(self, invoice_database: InvoiceDatabase):
         self._creds = None
         self._invoice_database = invoice_database
-        self._invoice_s3 = invoice_s3
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
@@ -52,7 +51,7 @@ class BostonEDU_Google_Calendar:
                     print("\n")
                     print("Regenerating new token...")
                     Path(r"token.json").unlink()
-                    self.__init__(invoice_database, invoice_s3)
+                    self.__init__(invoice_database)
                     return
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
@@ -144,7 +143,7 @@ class BostonEDU_Google_Calendar:
         return lineitem
 
     def _process_student_invoice(self, events) -> None:
-        student_invoice = StudentInvoice(self._timeMin, self._timeMax, self._invoice_database, self._invoice_s3)
+        student_invoice = StudentInvoice(self._timeMin, self._timeMax, self._invoice_database)
 
         # for event in events:
         #     print(event["summary"], event["start"].get("dateTime"))
@@ -195,7 +194,7 @@ class BostonEDU_Google_Calendar:
         print(r"Your file has been saved to: {}\base_generated".format(Path().absolute()))
 
     def _process_teacher_invoice(self, events) -> None:
-        teacher_invoice = TeacherInvoice(self._timeMin, self._timeMax, self._invoice_database, self._invoice_s3)
+        teacher_invoice = TeacherInvoice(self._timeMin, self._timeMax, self._invoice_database)
 
         for event in events:
             lineitem = self._check_and_obtain_calendar_variables(event)

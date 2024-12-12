@@ -9,7 +9,7 @@ import xlwings
 from openpyxl.utils import rows_from_range
 
 from invoice_database import InvoiceDatabase
-from invoice_s3 import InvoiceS3
+# from invoice_s3 import InvoiceS3
 
 EXCEL_INVOICE_FILENAME = "%B_{} %Y - ({})"
 
@@ -91,7 +91,7 @@ class CalendarData_Inner_LinkedList:
         self.next = None
 
 class Invoice:
-    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase, invoice_s3: InvoiceS3):
+    def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase):
         self._head = None
 
         self._to_override_all = False
@@ -103,7 +103,6 @@ class Invoice:
         self._total_amount = 0
 
         self._invoice_database = invoice_database
-        self._invoice_s3 = invoice_s3
 
     def __del__(self):
         while self._head:
