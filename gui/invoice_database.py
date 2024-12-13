@@ -9,13 +9,13 @@ _DB_NAME = "invoice"
 
 class InvoiceDatabase:
     def __init__(self):
-        config_info = config.obtain_cfg_info("config/aws_rds_database_info.cfg")
+        config_info = config.obtain_cfg_info("config/aws_rds_database_info.cfg")["DATABASE_CLIENT"]
         try:
             self._rates_db = mysql.connector.connect(
-                host=config_info["DATABASE_CLIENT"]["host"],
-                user=config_info["DATABASE_CLIENT"]["username"],
-                password=config_info["DATABASE_CLIENT"]["password"],
-                port=config_info["DATABASE_CLIENT"]["port"]
+                host=config_info["host"],
+                user=config_info["username"],
+                password=config_info["password"],
+                port=config_info["port"]
             )
 
             self._cursor = self._rates_db.cursor()

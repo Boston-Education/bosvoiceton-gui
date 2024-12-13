@@ -25,7 +25,7 @@ class LineItem:
     def __init__(self, title):
         title_split = split_calendar_title(title)
         self._isCanceled = title_split[0].upper() == "CXL"
-        self._teacher_name = title_split[1]
+        self._teacher_name = title_split[1].lstrip()
         self._student_names = re.split(r",(?:\s*)", title_split[2])
         self._class_name = title_split[3]
         self._code_names = title_split[4].upper().replace(" ", "")

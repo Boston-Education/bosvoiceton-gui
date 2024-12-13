@@ -98,7 +98,7 @@ class BostonEDU_Google_Calendar:
             else:
                 self._process_student_invoice(events)
 
-            print(f"{"Done writing invoice data!":-^80}")
+            print(f"{"Done writing invoice data on {} {}!":-^80}".format(month, year))
         except HttpError as error:
             print(f"An error occurred: {error}")
 

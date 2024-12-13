@@ -5,9 +5,17 @@ from datetime import datetime
 # from invoice_s3 import InvoiceS3
 from invoice_database import InvoiceDatabase
 from invoice import Invoice, CalendarData_Invoice_LinkedList, _copy_range, EXCEL_INVOICE_FILENAME
+import config_file_reader as config
 
 FILEPATH = r"template/Teacher Base Template.xlsx"
 TEACHER_INVOICE_OUTPUT = r"base_generated/teacher/{}/{}.xlsx"
+
+config_info = config.obtain_cfg_info("config/settings.cfg")["TEACHER_INVOICE_CELL"]
+DATESPAN = config_info["datespan"]
+INVOICE_ID = config_info["invoiceid"]
+TEACHER_NAME = config_info["personname"]
+TABLE_START_ROW = config_info["tablestartrow"]
+NS_COLOR = config_info["nscolor"]
 
 class TeacherInvoice(Invoice):
     def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase):
@@ -33,13 +41,13 @@ class TeacherInvoice(Invoice):
 
             timeMin_str = self._timeMin.strftime("%m/%d")
             timeMax_str = self._timeMax.strftime("%m/%d")
-            local_sheet["G3"] = "{}-{}".format(timeMin_str, timeMax_str)
+            local_sheet[DATESPAN] = "{}-{}".format(timeMin_str, timeMax_str)
 
             if local_sheet.cell(row=2, column=7).value == None:
-                local_sheet["G2"] = tempHead.invoice_id
-            local_sheet["F5"] = tempHead.person_name
+                local_sheet[INVOICE_ID] = tempHead.invoice_id
+            local_sheet[TEACHER_NAME] = tempHead.person_name
 
-            i = 11
+            i = int(TABLE_START_ROW)
             total_hours = 0
             prevtempInvoiceHead = None  # Had to include previous node since rows insert above from the current index.
             tempInvoiceHead = tempHead.invoice
@@ -58,7 +66,7 @@ class TeacherInvoice(Invoice):
                         i += 1
 
                 if tempInvoiceHead.no_show:
-                    bg_color = "bbff99"
+                    bg_color = NS_COLOR
                     local_sheet[r"B{}".format(i)].fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
                     local_sheet[r"C{}".format(i)].fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
                     local_sheet[r"D{}".format(i)].fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
