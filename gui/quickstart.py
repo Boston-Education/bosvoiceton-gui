@@ -168,7 +168,7 @@ class BostonEDU_Google_Calendar:
 
             code_name = lineitem.get_code_names()
 
-            stu_base_rate = int(re.findall(r"S([0-9a-fA-F])+$", code_name)[0], 16)
+            stu_base_rate = int(re.findall(r"S([0-9a-fA-F]+)$", code_name)[0], 16)
             stu_base_rate = abs(stu_base_rate)  # Prevent negative numbers from entering invoice.
 
             for student in lineitem.get_student_names():
@@ -221,7 +221,7 @@ class BostonEDU_Google_Calendar:
 
                 code_name = lineitem.get_code_names()
 
-                tea_base_rate = int(re.findall(r"^T([0-9a-fA-F])+", code_name)[0], 16)
+                tea_base_rate = int(re.findall(r"^T([0-9a-fA-F]+)", code_name)[0], 16)
                 tea_base_rate = abs(tea_base_rate)  # Prevent negative numbers from entering invoice.
 
                 teacher_date = schedule_date.strftime("%m/%d/%Y")

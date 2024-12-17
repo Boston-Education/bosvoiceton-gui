@@ -17,7 +17,7 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-VERSION = "v0.2.1-beta"
+VERSION = "v0.2.2-beta"
 
 DEF_PADX = 10
 DEF_PADY = 10
