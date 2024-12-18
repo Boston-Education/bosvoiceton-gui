@@ -87,7 +87,9 @@ class InvoiceDatabase:
     #     return exec_result[0] if exec_result != None else None
 
     def create_discount_amount(self, student_name: str, amount: float):
-        self._cursor.execute("SELECT student_name FROM student WHERE student_name = '{}'".format(student_name))
+        self._cursor.execute("SELECT disc_id FROM student_discount\n"
+                             "INNER JOIN student ON student.id = student_discount.stu_id\n"
+                             "WHERE student.student_name = '{}'".format(student_name))
         if self._cursor.fetchall() != []:
             return False
         self._cursor.execute("INSERT INTO student_discount (stu_id, disc_rate)\n"

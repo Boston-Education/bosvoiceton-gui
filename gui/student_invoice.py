@@ -182,7 +182,7 @@ class StudentInvoice(Invoice):
                 local_sheet[r"D{}".format(i)].font = Font(color="FF0000", size=14)
                 local_sheet[r"E{}".format(i)] = str(discount_amount * 100) + "%"
                 local_sheet[r"E{}".format(i)].font = Font(color="FF0000", size=14)
-                local_sheet[r"G{}".format(i)] = (self._total_amount * (1 - discount_amount))
+                local_sheet[r"G{}".format(i)] = -(discount_amount * self._total_amount)
                 local_sheet[r"G{}".format(i)].font = Font(color="FF0000", size=14)
 
             for i in range(28, 499):

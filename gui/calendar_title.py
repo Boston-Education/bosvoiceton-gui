@@ -14,7 +14,7 @@ def split_calendar_title(title: str) -> list:
     # For consistency
     if title_sep[0].upper() != "CXL" and title_sep[0].upper() != "NS":
         title_sep.insert(0, "")
-    if not re.search(r"^T(\d+)(\*?)S(\d+)(\*?)$", title_sep[4].upper().replace(" ", "")):
+    if not re.search(r"^T([0-9a-fA-F]+)S([0-9a-fA-F]+)$", title_sep[4].upper().replace(" ", "")):
         raise Exception("ERROR: Improper code format currently read as {} for: {}! Skipping...".format(title_sep[4], title))
 
     if len(title_sep) > 6:
