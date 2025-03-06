@@ -25,8 +25,7 @@ class TeacherInvoice(Invoice):
         tempHead = self._head
         while tempHead is not None:
             self._total_amount = 0
-            revised_date_filename = self._timeMax.strftime(EXCEL_INVOICE_FILENAME).format(
-                "A" if self._timeMax.day == 15 else "B", tempHead.person_name)
+            revised_date_filename = self._timeMax.strftime(EXCEL_INVOICE_FILENAME).format(tempHead.person_name)
             destination = (TEACHER_INVOICE_OUTPUT.format(tempHead.person_name, revised_date_filename))
 
             is_filepath_validated = self._check_filepath_validation(tempHead.person_name, FILEPATH, destination, revised_date_filename)
@@ -43,23 +42,22 @@ class TeacherInvoice(Invoice):
             timeMax_str = self._timeMax.strftime("%m/%d")
             local_sheet[DATESPAN] = "{}-{}".format(timeMin_str, timeMax_str)
 
-            if local_sheet.cell(row=2, column=7).value == None:
+            if local_sheet.cell(row=2, column=7).value is None:
                 local_sheet[INVOICE_ID] = tempHead.invoice_id
             local_sheet[TEACHER_NAME] = tempHead.person_name
 
             i = int(TABLE_START_ROW)
-            total_hours = 0
             prevtempInvoiceHead = None  # Had to include previous node since rows insert above from the current index.
             tempInvoiceHead = tempHead.invoice
-            while tempInvoiceHead != None:
-                if local_sheet.cell(row=i, column=5).value != None:
+            while tempInvoiceHead is not None:
+                if local_sheet.cell(row=i, column=5).value is not None:
                     i += 1
                     tempInvoiceHead = tempInvoiceHead.next
                     continue
-                if local_sheet.cell(row=i+2, column=5).value != None:
+                if local_sheet.cell(row=i+2, column=5).value is not None:
                     local_sheet.insert_rows(i+1)
                     _copy_range("B{}:G{}".format(i, i), local_sheet, 1)
-                if prevtempInvoiceHead != None:
+                if prevtempInvoiceHead is not None:
                     if tempInvoiceHead.person_name.upper() != prevtempInvoiceHead.person_name.upper():
                         local_sheet.insert_rows(i+1)
                         _copy_range("B{}:G{}".format(i, i), local_sheet, 1)
@@ -81,25 +79,24 @@ class TeacherInvoice(Invoice):
                 local_sheet[r"F{}".format(i)] = tempInvoiceHead.hour
                 local_sheet[r"G{}".format(i)] = tempInvoiceHead.amount
 
-                total_hours += tempInvoiceHead.hour
                 self._total_amount += tempInvoiceHead.amount
 
                 i += 1
                 prevtempInvoiceHead = tempInvoiceHead
                 tempInvoiceHead = tempInvoiceHead.next
 
-            for i in range(25, 499):
+            for i in range(25, local_sheet.max_row):
                 if not str(local_sheet.cell(row=i, column=5).value).startswith("Hours"):
                     continue
 
-                local_sheet.cell(row=i, column=6).value = total_hours
+                local_sheet.cell(row=i, column=6).value = self.convert_to_sum_formula(11, i - 1, "F")
                 break
 
-            for i in range(31, 499):
+            for i in range(31, local_sheet.max_row):
                 if not str(local_sheet.cell(row=i, column=6).value).startswith("Total"):
                     continue
 
-                local_sheet.cell(row=i, column=7).value = self._total_amount
+                local_sheet.cell(row=i, column=7).value = self.convert_to_sum_formula(11, i - 1, "G")
                 break
 
             # TODO: Convert excel to pdf for safety issue

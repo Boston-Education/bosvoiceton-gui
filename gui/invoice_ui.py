@@ -17,7 +17,7 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-VERSION = "v0.2.2-beta"
+VERSION = "v0.2.3-beta"
 
 DEF_PADX = 10
 DEF_PADY = 10
@@ -195,39 +195,39 @@ class Invoice_GUI:
         # self._data_message_output = ttk.Label(self._tab2, text="")
         # self._data_message_output.grid(row=2, column=1, columnspan=4, sticky=tk.W, padx=3)
 
-        self._payment_label = ttk.Label(self._tab2, text="Payment:")
-        self._payment_label.grid(row=2, column=1, sticky=tk.EW + tk.S, padx=3, pady=DEF_PADY)
-        self._payment_name_label = ttk.Label(self._tab2, text="Student Name:")
-        self._payment_name_label.grid(row=3, column=1, sticky=tk.E + tk.N, padx=3, pady=3)
-        self._payment_name_combobox = ttk.Combobox(self._tab2)
-        self._payment_name_combobox["values"] = [name[0] for name in sorted(self._database.get_all_student_name(), key=lambda x: x[0])]
-        self._payment_name_combobox.grid(row=3, column=2, sticky=tk.EW + tk.N, padx=3, pady=3)
-
-        # self._payment_date_label = ttk.Label(self._tab2, text="Date of Payment:")
-        # self._payment_date_label.grid(row=3, column=1, sticky=tk.E + tk.S, padx=3, pady=3)
-        # self._payment_date_entry = ttk.Entry(self._tab2)
-        # self._payment_date_entry.insert(tk.END, datetime.now().strftime("%B %d, %Y"))
-        # self._payment_date_entry.configure(state="disabled")
-        # self._payment_date_entry.grid(row=3, column=2, sticky=tk.EW + tk.S, padx=3, pady=3)
-
-        self._payment_amount_label = ttk.Label(self._tab2, text="Amount:")
-        self._payment_amount_label.grid(row=3, column=1, sticky=tk.E, padx=3, pady=3)
-        self._payment_amount_entry_var = tk.DoubleVar()
-        self._payment_amount_entry = ttk.Entry(self._tab2, textvariable=self._payment_amount_entry_var)
-        self._payment_amount_entry.bind("<FocusOut>", lambda _: self._auto_round_to_two_deci(self._payment_amount_entry_var))
-        self._payment_amount_entry.grid(row=3, column=2, sticky=tk.EW, padx=3, pady=3)
-
-        self._payment_type_label = ttk.Label(self._tab2, text="Payment Type:")
-        self._payment_type_label.grid(row=3, column=1, sticky=tk.E + tk.S, padx=3, pady=3)
-        self._payment_type_combobox = ttk.Combobox(self._tab2)
-        self._payment_type_combobox["values"] = ("Cash", "Checks", "Venmo", "Zelle", "PayPal")
-        self._payment_type_combobox.grid(row=3, column=2, sticky=tk.EW + tk.S, padx=3, pady=3)
-
-        self._payment_apply_button = ttk.Button(self._tab2, text="Make Payment", command=self._update_payment)
-        self._payment_apply_button.grid(row=4, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=DEF_PADY)
-
-        # self._payment_message_label = ttk.Label(self._tab2, text="")
-        # self._payment_message_label.grid(row=4, column=1, rowspan=2, columnspan=4, sticky=tk.W, padx=3)
+        # self._payment_label = ttk.Label(self._tab2, text="Payment:")
+        # self._payment_label.grid(row=2, column=1, sticky=tk.EW + tk.S, padx=3, pady=DEF_PADY)
+        # self._payment_name_label = ttk.Label(self._tab2, text="Student Name:")
+        # self._payment_name_label.grid(row=3, column=1, sticky=tk.E + tk.N, padx=3, pady=3)
+        # self._payment_name_combobox = ttk.Combobox(self._tab2)
+        # self._payment_name_combobox["values"] = [name[0] for name in sorted(self._database.get_all_student_name(), key=lambda x: x[0])]
+        # self._payment_name_combobox.grid(row=3, column=2, sticky=tk.EW + tk.N, padx=3, pady=3)
+        #
+        # # self._payment_date_label = ttk.Label(self._tab2, text="Date of Payment:")
+        # # self._payment_date_label.grid(row=3, column=1, sticky=tk.E + tk.S, padx=3, pady=3)
+        # # self._payment_date_entry = ttk.Entry(self._tab2)
+        # # self._payment_date_entry.insert(tk.END, datetime.now().strftime("%B %d, %Y"))
+        # # self._payment_date_entry.configure(state="disabled")
+        # # self._payment_date_entry.grid(row=3, column=2, sticky=tk.EW + tk.S, padx=3, pady=3)
+        #
+        # self._payment_amount_label = ttk.Label(self._tab2, text="Amount:")
+        # self._payment_amount_label.grid(row=3, column=1, sticky=tk.E, padx=3, pady=3)
+        # self._payment_amount_entry_var = tk.DoubleVar()
+        # self._payment_amount_entry = ttk.Entry(self._tab2, textvariable=self._payment_amount_entry_var)
+        # self._payment_amount_entry.bind("<FocusOut>", lambda _: self._auto_round_to_two_deci(self._payment_amount_entry_var))
+        # self._payment_amount_entry.grid(row=3, column=2, sticky=tk.EW, padx=3, pady=3)
+        #
+        # self._payment_type_label = ttk.Label(self._tab2, text="Payment Type:")
+        # self._payment_type_label.grid(row=3, column=1, sticky=tk.E + tk.S, padx=3, pady=3)
+        # self._payment_type_combobox = ttk.Combobox(self._tab2)
+        # self._payment_type_combobox["values"] = ("Cash", "Checks", "Venmo", "Zelle", "PayPal")
+        # self._payment_type_combobox.grid(row=3, column=2, sticky=tk.EW + tk.S, padx=3, pady=3)
+        #
+        # self._payment_apply_button = ttk.Button(self._tab2, text="Make Payment", command=self._update_payment)
+        # self._payment_apply_button.grid(row=4, column=1, columnspan=4, sticky=tk.EW + tk.N, padx=3, pady=DEF_PADY)
+        #
+        # # self._payment_message_label = ttk.Label(self._tab2, text="")
+        # # self._payment_message_label.grid(row=4, column=1, rowspan=2, columnspan=4, sticky=tk.W, padx=3)
 
         ###############################
         # [CALENDAR FORMATTER (TAB3)] #
@@ -501,8 +501,8 @@ class Invoice_GUI:
         print(f"{"Waiting for authorization...":-^80}")
 
         bost_google_cal = BostonEDU_Google_Calendar(self._database)
-        bost_google_cal.read_calendar_info(month, 1, 15, year, True)
-        bost_google_cal.read_calendar_info(month, 16, calendar.monthrange(year, month)[1], year, True)
+        # bost_google_cal.read_calendar_info(month, 1, 15, year, True)
+        bost_google_cal.read_calendar_info(month, 1, calendar.monthrange(year, month)[1], year, True)
         bost_google_cal.read_calendar_info(month, 1, calendar.monthrange(year, month)[1], year, False)
         self._update_data_display()
 
@@ -595,33 +595,33 @@ class Invoice_GUI:
     #     elif data_option_mode == 3:
     #         self._data_location_combobox['values'] = ("Student", "Discount", "Course")
 
-    def _update_payment(self):
-        try:
-            payment_amount = self._payment_amount_entry_var.get()
-            if payment_amount <= 0:
-                raise Exception("Please enter an amount greater than 0.")
-    
-            payment_type = self._payment_type_combobox.get()
-            if payment_type not in self._payment_type_combobox["values"]:
-                raise Exception("ERROR: Invalid payment type!")
-    
-            student = self._database.find_student_info(self._payment_name_combobox.get())
-            if student is None:
-                raise Exception("ERROR: No student exists in our database!")
-    
-            try:
-                student_invoice.update_tuition_amount(student[0].title(), payment_amount, payment_type)
-                messagebox.showinfo(message="Successfully executed prompt!")
-                self._payment_name_combobox.delete(0, tk.END)
-            except FileNotFoundError:
-                raise Exception("ERROR: Unable to locate file when attempting to access!\n"
-                                                           "Make sure the sheet exists in this student name and try again!")
-            except IndexError:
-                raise Exception("ERROR: Found empty folder in this student name!")
-            except PermissionError:
-                raise Exception("ERROR: Permission denied! Close the current sheet application and try again!")
-        except Exception as e:
-            messagebox.showerror(title="Payment Aborted!", message=str(e))
+    # def _update_payment(self):
+    #     try:
+    #         payment_amount = self._payment_amount_entry_var.get()
+    #         if payment_amount <= 0:
+    #             raise Exception("Please enter an amount greater than 0.")
+    #
+    #         payment_type = self._payment_type_combobox.get()
+    #         if payment_type not in self._payment_type_combobox["values"]:
+    #             raise Exception("ERROR: Invalid payment type!")
+    #
+    #         student = self._database.find_student_info(self._payment_name_combobox.get())
+    #         if student is None:
+    #             raise Exception("ERROR: No student exists in our database!")
+    #
+    #         try:
+    #             student_invoice.update_tuition_amount(student[0].title(), payment_amount, payment_type)
+    #             messagebox.showinfo(message="Successfully executed prompt!")
+    #             self._payment_name_combobox.delete(0, tk.END)
+    #         except FileNotFoundError:
+    #             raise Exception("ERROR: Unable to locate file when attempting to access!\n"
+    #                                                        "Make sure the sheet exists in this student name and try again!")
+    #         except IndexError:
+    #             raise Exception("ERROR: Found empty folder in this student name!")
+    #         except PermissionError:
+    #             raise Exception("ERROR: Permission denied! Close the current sheet application and try again!")
+    #     except Exception as e:
+    #         messagebox.showerror(title="Payment Aborted!", message=str(e))
 
     def _update_teacher_listbox(self, event=None):
         value = re.split(r",(?:\s*)", self._teacher_name_entry.get())[-1]

@@ -1,3 +1,4 @@
+import re
 import shutil
 from copy import copy
 from datetime import datetime
@@ -7,11 +8,12 @@ from tkinter import messagebox, ttk
 
 import xlwings
 from openpyxl.utils import rows_from_range
+from openpyxl.workbook import Workbook
 
 from invoice_database import InvoiceDatabase
 # from invoice_s3 import InvoiceS3
 
-EXCEL_INVOICE_FILENAME = "%B_{} %Y - ({})"
+EXCEL_INVOICE_FILENAME = "%B %Y - ({})"
 
 class InvoiceCloneRefusalError(Exception):
     """Raises an exception where the program attempts to clone via shutil.copy() but refuses to access.
@@ -122,6 +124,21 @@ class Invoice:
         if pay_period:
             id_result += "A" if self._timeMax.day == 15 else "B"
         return id_result
+
+    def convert_to_value(self, sheet: Workbook, formula_cell: str) -> float:
+        extracted_formula_cell = re.search(r"([A-Z]+)?(\d+):([A-Z]+)?(\d+)", formula_cell)
+        if not extracted_formula_cell:
+            raise Exception("Formula does not follow the Excel format within the cell!")
+
+        start_row, end_row = int(extracted_formula_cell.group(2)), int(extracted_formula_cell.group(4))
+        added_result = 0.0
+        for i in range(start_row, end_row + 1):
+            added_result += sheet[f"G{i}"].value if sheet[f"G{i}"].value is not None else 0.0
+
+        return added_result
+
+    def convert_to_sum_formula(self, start_row: int, end_row: int, column: str) -> str:
+        return f"=SUM({column}{start_row}:{column}{end_row})"
 
     def store_calendar_invoice_data(self, person_name: str, invoice: CalendarData_Invoice_LinkedList):
         invoice_id = self._create_unique_id(person_name)

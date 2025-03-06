@@ -7,10 +7,10 @@ from datetime import datetime
 
 # from invoice_s3 import InvoiceS3
 from invoice_database import InvoiceDatabase
-from invoice import Invoice, CalendarData_Invoice_LinkedList, _copy_range
+from invoice import Invoice, CalendarData_Invoice_LinkedList, _copy_range, EXCEL_INVOICE_FILENAME
 import config_file_reader as config
 
-EXCEL_INVOICE_FILENAME = "%B %Y - ({})"
+# EXCEL_INVOICE_FILENAME = "%B %Y - ({})"
 
 FILEPATH = r"template/Student Base Template.xlsx"
 STUDENT_INVOICE_OUTPUT = r"base_generated/student/{}/{}.xlsx"
@@ -27,54 +27,37 @@ NS_COLOR = config_info["nscolor"]
 def compute_discount(total_amount: float, discount_amount: float, tuition_amount: float) -> float:
     return (total_amount * (1 - discount_amount)) + tuition_amount
 
-def read_past_tuition_amount(destination: str, student_name: str) -> float:
-    try:
-        previous_path = Path(destination)
-        previous_workbook = openpyxl.load_workbook(previous_path)
 
-        previous_sheet = previous_workbook.active
-        for i in range(28, 499):
-            if not str(previous_sheet.cell(row=i, column=6).value).startswith("Total"):
-                continue
-
-            prev_result = previous_sheet.cell(row=i, column=7).value
-            previous_workbook.close()
-            return prev_result
-        return 0.0
-    except FileNotFoundError:
-        print("ERROR: Unable to find a previous file to access past cost for {}! Reading 0.0 instead...".format(student_name))
-        return 0.0
-
-def update_tuition_amount(student_name: str, payment_amount: float, payment_type: str) -> None:
-    dest_to_update = Path(r"base_generated/student/{}".format(student_name))
-    path_result = [x for x in sorted(dest_to_update.iterdir(), key=os.path.getctime) if x.is_file()]
-    #tuition_result = read_past_tuition_amount(path_result[-1].__str__(), path_result[-1].name)
-
-    latest_file_creation = path_result[-1]
-    update_workbook = openpyxl.load_workbook(latest_file_creation)
-    update_sheet = update_workbook.active
-    for i in range(28, 499):
-        if not str(update_sheet.cell(row=i, column=6).value).startswith("Total"):
-            continue
-
-        current_tuition = update_sheet.cell(row=i, column=7).value
-        update_sheet.cell(row=i, column=7).value = current_tuition - payment_amount
-
-        if update_sheet.cell(row=i-2, column=7).value != None or update_sheet.cell(row=i-1, column=7).value != None:
-            update_sheet.insert_rows(i - 1)
-            _copy_range("B{}:G{}".format(i, i), update_sheet, -1)
-        else:
-            i -= 1
-        update_sheet[r"C{}".format(i)] = datetime.now().strftime("%B %d, %Y")
-        update_sheet[r"C{}".format(i)].font = Font(color="009600", size=14)
-        update_sheet[r"D{}".format(i)] = payment_type
-        update_sheet[r"D{}".format(i)].font = Font(color="009600", size=14)
-        update_sheet[r"G{}".format(i)] = -payment_amount
-        update_sheet[r"G{}".format(i)].font = Font(color="009600", size=14)
-
-        update_workbook.save(latest_file_creation)
-        update_workbook.close()
-        return
+# def update_tuition_amount(student_name: str, payment_amount: float, payment_type: str) -> None:
+#     dest_to_update = Path(r"base_generated/student/{}".format(student_name))
+#     path_result = [x for x in sorted(dest_to_update.iterdir(), key=os.path.getctime) if x.is_file()]
+#     #tuition_result = read_past_tuition_amount(path_result[-1].__str__(), path_result[-1].name)
+#
+#     latest_file_creation = path_result[-1]
+#     update_workbook = openpyxl.load_workbook(latest_file_creation)
+#     update_sheet = update_workbook.active
+#     for i in range(28, 499):
+#         if not str(update_sheet.cell(row=i, column=6).value).startswith("Total"):
+#             continue
+#
+#         current_tuition = update_sheet.cell(row=i, column=7).value
+#         update_sheet.cell(row=i, column=7).value = current_tuition - payment_amount
+#
+#         if update_sheet.cell(row=i-2, column=7).value != None or update_sheet.cell(row=i-1, column=7).value != None:
+#             update_sheet.insert_rows(i - 1)
+#             _copy_range("B{}:G{}".format(i, i), update_sheet, -1)
+#         else:
+#             i -= 1
+#         update_sheet[r"C{}".format(i)] = datetime.now().strftime("%B %d, %Y")
+#         update_sheet[r"C{}".format(i)].font = Font(color="009600", size=14)
+#         update_sheet[r"D{}".format(i)] = payment_type
+#         update_sheet[r"D{}".format(i)].font = Font(color="009600", size=14)
+#         update_sheet[r"G{}".format(i)] = -payment_amount
+#         update_sheet[r"G{}".format(i)].font = Font(color="009600", size=14)
+#
+#         update_workbook.save(latest_file_creation)
+#         update_workbook.close()
+#         return
 
 def _name_previous_excel_date(schedule_date: datetime, student_name: str) -> str:
     # Not to be confused with past invoice date cycle since this algorithm is in reverse.
@@ -91,6 +74,29 @@ def _name_previous_excel_date(schedule_date: datetime, student_name: str) -> str
 class StudentInvoice(Invoice):
     def __init__(self, timeMin: datetime, timeMax: datetime, invoice_database: InvoiceDatabase):
         super().__init__(timeMin, timeMax, invoice_database)
+
+    def read_past_tuition_amount(self, destination: str, student_name: str) -> float:
+        try:
+            previous_path = Path(destination)
+            previous_workbook = openpyxl.load_workbook(previous_path)
+
+            previous_sheet = previous_workbook.active
+            for i in range(28, 499):
+                if not str(previous_sheet.cell(row=i, column=6).value).startswith("Total"):
+                    continue
+
+                prev_result = previous_sheet.cell(row=i, column=7).value
+                value_convert = self.convert_to_value(previous_sheet, prev_result)
+                previous_workbook.close()
+                return value_convert
+            return 0.0
+        except FileNotFoundError:
+            print("ERROR: Unable to find a previous file to access past cost for {}! Reading 0.0 instead...".format(
+                student_name))
+            return 0.0
+        except Exception as e:
+            print(f"{destination}: {e}")
+            raise e
 
     def write_invoice_to_excel(self) -> None:
         tempHead = self._head
@@ -110,7 +116,7 @@ class StudentInvoice(Invoice):
             local_sheet = local_workbook.active
 
             prev_excel_date = _name_previous_excel_date(self._timeMax, tempHead.person_name)
-            tuition_amount = read_past_tuition_amount(STUDENT_INVOICE_OUTPUT
+            tuition_amount = self.read_past_tuition_amount(STUDENT_INVOICE_OUTPUT
                                                       .format(tempHead.person_name, prev_excel_date), tempHead.person_name)
             local_sheet[PAST_TUITION] = tuition_amount
 
@@ -118,19 +124,19 @@ class StudentInvoice(Invoice):
             timeMax_str = self._timeMax.strftime("%m/%d")
             local_sheet[DATESPAN] = "{}-{}".format(timeMin_str, timeMax_str)
 
-            if local_sheet.cell(row=4, column=7).value == None:
+            if local_sheet.cell(row=4, column=7).value is None:
                 local_sheet[INVOICE_ID] = tempHead.invoice_id
             local_sheet[STUDENT_NAME] = tempHead.person_name
 
             i = int(TABLE_START_ROW)
             prevtempInvoiceHead = None  # Had to include previous node since rows insert above from the current index.
             tempInvoiceHead = tempHead.invoice
-            while tempInvoiceHead != None:
-                if local_sheet.cell(row=i, column=2).value != None:
+            while tempInvoiceHead is not None:
+                if local_sheet.cell(row=i, column=2).value is not None:
                     i += 1
                     tempInvoiceHead = tempInvoiceHead.next
                     continue
-                if local_sheet.cell(row=i+2, column=2).value != None:
+                if local_sheet.cell(row=i+2, column=2).value is not None:
                     local_sheet.insert_rows(i+1)
                     _copy_range("B{}:G{}".format(i, i), local_sheet, 1)
                 if prevtempInvoiceHead != None:
@@ -171,8 +177,8 @@ class StudentInvoice(Invoice):
                 tempInvoiceHead = tempInvoiceHead.next
 
             discount_amount = self._invoice_database.get_discount_amount(tempHead.person_name)
-            if discount_amount != None:
-                if local_sheet.cell(row=i+2, column=2).value != None:
+            if discount_amount is not None:
+                if local_sheet.cell(row=i+2, column=2).value is not None:
                     local_sheet.insert_rows(i+1)
                     _copy_range("B{}:G{}".format(i, i), local_sheet, 1)
                     i += 1
@@ -185,21 +191,22 @@ class StudentInvoice(Invoice):
                 local_sheet[r"G{}".format(i)] = -(discount_amount * self._total_amount)
                 local_sheet[r"G{}".format(i)].font = Font(color="FF0000", size=14)
 
-            for i in range(28, 499):
+            for i in range(28, local_sheet.max_row):
                 if not str(local_sheet.cell(row=i, column=6).value).startswith("Total"):
                     continue
 
                 local_sheet.cell(row=i, column=7).value = self._total_amount + tuition_amount
 
-                if discount_amount == None:
+                if discount_amount is None:
+                    local_sheet.cell(row=i, column=7).value = self.convert_to_sum_formula(14, i - 1, "G")
                     break
-                if discount_amount != 0:
+                elif discount_amount != 0:
                     print("Discount applied to student, {}, for {}%!".format(tempHead.person_name, discount_amount * 100))
 
                 discount_cost = local_sheet.cell(row=i, column=7).value = compute_discount(self._total_amount, discount_amount, tuition_amount)
+                local_sheet.cell(row=i, column=7).value = self.convert_to_sum_formula(14, i - 1, "G")
                 break
 
-            # TODO: Convert excel to pdf for safety issue
             local_workbook.save(destination)
             local_workbook.close()
 
