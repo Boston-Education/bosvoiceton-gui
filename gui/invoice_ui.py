@@ -17,7 +17,7 @@ from invoice_database import InvoiceDatabase
 from quickstart import BostonEDU_Google_Calendar
 from invoice_file_listener import Invoice_File_Listener
 
-VERSION = "v0.2.3-beta"
+VERSION = "v0.2.4-beta"
 
 DEF_PADX = 10
 DEF_PADY = 10
@@ -391,7 +391,7 @@ class Invoice_GUI:
             self._database = InvoiceDatabase()
             print("Successfully established connection to database!")
         except:
-            messagebox.showerror(title="MYSQL Connection Failed!", message="Unable to connect to the database!\nVerify that the information is correct and try again.")
+            messagebox.showerror(title="Database Connection Failed!", message="Unable to connect to the database!\nVerify that the information is correct and try again.")
             sys.exit(0)
 
     def _connect_s3_bucket(self) -> None:
@@ -426,12 +426,14 @@ class Invoice_GUI:
     
             try:
                 parameter = self._data_parameter_entry_var.get()
+                if isinstance(parameter, str) and len(parameter) == 0:
+                    raise Exception("Please input the parameter entry!")
             except tk.TclError:
                 raise Exception("ERROR: Invalid parameter entry. Please try another input!")
     
             data_option_mode = self._data_options_var.get()
             name_checker = self._database.find_student_info(student_name)
-            if name_checker == None and data_option_mode != 1 and name_combobox_state == "normal":
+            if name_checker is None and name_combobox_state == "normal":
                 raise Exception("ERROR: Cannot find a student named {}! Please try another input!".format(student_name))
     
             data_combo = self._data_location_combobox.get()
@@ -452,7 +454,7 @@ class Invoice_GUI:
                     raise Exception("ERROR: Please specify the database location!")
             elif data_option_mode == 3:       # Delete
                 if data_combo == "Student":
-                    if not messagebox.askyesno(title="Deletion Warning", message="Deleting student name will also delete any data companion such as discount.\n\n"
+                    if not messagebox.askyesno(title="Deletion Warning", message="Deleting student name will also delete any data companions such as discount.\n\n"
                                                                                  "Do you wish to continue? THIS ACTION CANNOT BE UNDONE!", icon="warning"):
                         return
     

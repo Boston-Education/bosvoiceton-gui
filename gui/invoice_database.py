@@ -9,7 +9,7 @@ _DB_NAME = "invoice"
 
 class InvoiceDatabase:
     def __init__(self):
-        config_info = config.obtain_cfg_info("config/aws_rds_database_info.cfg")["DATABASE_CLIENT"]
+        config_info = config.obtain_cfg_info("config/database_login_info.cfg")["DATABASE_CLIENT"]
         try:
             self._rates_db = mysql.connector.connect(
                 host=config_info["host"],
